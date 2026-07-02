@@ -12,6 +12,7 @@ import filesRouter from './routes/files.js'
 import chatsRouter from './routes/chats.js'
 import wikiRouter from './routes/wiki.js'
 import newsRouter from './routes/news.js'
+import searchRouter from './routes/search.js'
 import pushRouter from './routes/push.js'
 import authRouter from './routes/auth.js'
 import knex from 'knex'
@@ -36,6 +37,7 @@ app.use('/api/chats', chatsRouter)
 app.use('/api/wiki', wikiRouter)
 app.use('/api/news', newsRouter)
 app.use('/api/push', pushRouter)
+app.use('/api/search', searchRouter)
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })

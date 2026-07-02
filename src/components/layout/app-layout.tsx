@@ -1,3 +1,5 @@
+import { useEffect } from "react"
+import { useNavigate } from "react-router-dom"
 import { Sidebar } from "./sidebar"
 import { Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -5,6 +7,18 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Sidebar as SidebarContent } from "./sidebar"
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
+  const navigate = useNavigate()
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault()
+        navigate("/search")
+      }
+    }
+    window.addEventListener("keydown", handler)
+    return () => window.removeEventListener("keydown", handler)
+  }, [navigate])
+
   return (
     <div className="flex h-screen overflow-hidden bg-muted/30">
       <Sidebar />
