@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import pool from '../db.js'
-import { authenticateToken } from '../middleware.js'
+import { authenticateToken, requireRole } from '../middleware.js'
 
 const router = Router()
 
@@ -106,7 +106,7 @@ router.put('/:id/priority', async (req, res) => {
 })
 
 // PUT /api/tickets/:id/assign
-router.put('/:id/assign', async (req, res) => {
+router.put('/:id/assign', requireRole('admin', 'senior_agent'), async (req, res) => {
   const { employeeId } = req.body
   try {
     await pool.query('UPDATE tickets SET assigned_to = ?, updated_at = NOW() WHERE id = ?', [employeeId, req.params.id])
@@ -130,6 +130,22 @@ router.post('/:id/messages', async (req, res) => {
     res.status(201).json(msg[0])
   } catch (err) {
     res.status(500).json({ message: 'Failed to add message' })
+  }
+})
+
+// DELETE /api/tickets/:id/messages/:msgId — admin or own message
+router.delete('/:id/messages/:msgId', async (req, res) => {
+  try {
+    const [[msg]] = await pool.query('SELECT * FROM ticket_messages WHERE id = ?', [req.params.msgId])
+    if (!msg) return res.status(404).json({ message: 'Message not found' })
+    const isAdmin = req.user.role === 'admin' || req.user.role === 'senior_agent'
+    const isOwner = msg.sender_id === req.user.userId
+    if (!isAdmin && !isOwner) return res.status(403).json({ message: 'Forbidden' })
+    await pool.query('DELETE FROM ticket_messages WHERE id = ?', [req.params.msgId])
+    res.json({ success: true })
+  } catch (err) {
+    console.error('Delete message error:', err)
+    res.status(500).json({ message: 'Failed to delete message' })
   }
 })
 

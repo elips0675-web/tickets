@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Textarea } from "@/components/ui/textarea"
 import { Search, Newspaper, Plus, Clock, User, AlertTriangle, Pin } from "lucide-react"
 import type { NewsPost } from "@/types"
+import { useAuth } from "@/context/AuthContext"
 
 const DEMO_NEWS: NewsPost[] = [
   { id: 1, title: "Запуск новой версии Service Desk 2.1", content: "Сегодня состоялся релиз обновления 2.1. Добавлены: улучшенный поиск по тикетам, новый дизайн дашборда, исправлены критические ошибки. Список изменений доступен в Wiki.", important: true, authorId: 1, authorName: "Алексей Петров", createdAt: "2026-07-02T09:00:00" },
@@ -16,6 +17,7 @@ const DEMO_NEWS: NewsPost[] = [
 ]
 
 export default function NewsPage() {
+  const { canManage } = useAuth()
   const [search, setSearch] = useState("")
   const [showImportant, setShowImportant] = useState(false)
   const [open, setOpen] = useState(false)
@@ -61,6 +63,7 @@ export default function NewsPage() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1">Объявления и обновления системы</p>
         </div>
+        {canManage && (
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button className="gap-2"><Plus className="w-4 h-4" />Новость</Button>
@@ -80,6 +83,7 @@ export default function NewsPage() {
             </div>
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       <div className="flex gap-3">

@@ -3,9 +3,11 @@ import { useNavigate, Link } from "react-router-dom"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { useAuth } from "@/context/AuthContext"
 
 export default function Login() {
   const navigate = useNavigate()
+  const { login } = useAuth()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
@@ -34,8 +36,7 @@ export default function Login() {
         setError(data.message || "Ошибка входа")
         return
       }
-      localStorage.setItem("token", data.token)
-      if (data.employee) localStorage.setItem("user", JSON.stringify(data.employee))
+      login(data.token, data.employee)
       navigate("/", { replace: true })
     } catch {
       setError("Ошибка соединения с сервером")
@@ -48,8 +49,7 @@ export default function Login() {
     try {
       const res = await fetch("/api/auth/dev-login", { method: "POST" })
       const data = await res.json()
-      localStorage.setItem("token", data.token)
-      if (data.employee) localStorage.setItem("user", JSON.stringify(data.employee))
+      login(data.token, data.employee)
       navigate("/", { replace: true })
     } catch {
       setError("Ошибка dev-логина")

@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useAuth } from "@/context/AuthContext"
 
 const DEPARTMENTS = [
   { id: 1, name: "IT" },
@@ -15,6 +16,7 @@ const DEPARTMENTS = [
 
 export default function Register() {
   const navigate = useNavigate()
+  const { login } = useAuth()
   const [form, setForm] = useState({ name: "", email: "", password: "", department: "", title: "" })
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
@@ -42,7 +44,7 @@ export default function Register() {
         setError(data.error || data.message || "Ошибка регистрации")
         return
       }
-      localStorage.setItem("token", data.token)
+      login(data.token, data.employee)
       navigate("/")
     } catch {
       setError("Ошибка соединения с сервером")

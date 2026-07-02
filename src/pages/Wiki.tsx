@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, BookOpen, Plus, Clock, User, Tag, Layers } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import type { WikiArticle } from "@/types"
+import { useAuth } from "@/context/AuthContext"
 
 const DEMO_ARTICLES: WikiArticle[] = [
   { id: 1, title: "Как создать заявку", content: "Для создания заявки перейдите в раздел «Тикеты» и нажмите «Новый тикет». Заполните форму и отправьте. Статус заявки можно отслеживать в списке.", category: "Руководство", tags: ["тикеты", "создание"], authorId: 1, authorName: "Алексей Петров", createdAt: "2026-06-15T10:00:00", updatedAt: "2026-06-20T14:00:00" },
@@ -28,6 +29,7 @@ export default function WikiPage() {
   const [newContent, setNewContent] = useState("")
   const [newCategory, setNewCategory] = useState("Руководство")
   const [newTags, setNewTags] = useState("")
+  const { canManage } = useAuth()
 
   const filtered = useMemo(() => {
     let items = DEMO_ARTICLES
@@ -71,6 +73,7 @@ export default function WikiPage() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1">Статьи, инструкции и документация</p>
         </div>
+        {canManage && (
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button className="gap-2"><Plus className="w-4 h-4" />Статья</Button>
@@ -97,6 +100,7 @@ export default function WikiPage() {
             </div>
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       <div className="flex gap-3">

@@ -1,26 +1,32 @@
 import { NavLink } from "react-router-dom"
-import { Ticket, LayoutDashboard, Users, PlusCircle, Calendar, BarChart3, FileText, MessageCircle, User, HelpCircle, LogOut, BookOpen, Newspaper } from "lucide-react"
+import { Ticket, LayoutDashboard, Users, PlusCircle, Calendar, BarChart3, FileText, MessageCircle, User, HelpCircle, LogOut, BookOpen, Newspaper, Shield } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/context/AuthContext"
 
 const navItems = [
-  { to: "/", icon: LayoutDashboard, label: "Дашборд" },
-  { to: "/chats", icon: MessageCircle, label: "Чаты" },
-  { to: "/tickets", icon: Ticket, label: "Тикеты" },
-  { to: "/employees", icon: Users, label: "Сотрудники" },
-  { to: "/calendar", icon: Calendar, label: "Календарь" },
-  { to: "/polls", icon: BarChart3, label: "Опросы" },
-  { to: "/wiki", icon: BookOpen, label: "База знаний" },
-  { to: "/news", icon: Newspaper, label: "Новости" },
-  { to: "/files", icon: FileText, label: "Файлы" },
-  { to: "/tickets/new", icon: PlusCircle, label: "Новый тикет" },
+  { to: "/", icon: LayoutDashboard, label: "Дашборд", roles: ["admin", "senior_agent", "agent"] },
+  { to: "/chats", icon: MessageCircle, label: "Чаты", roles: ["admin", "senior_agent", "agent"] },
+  { to: "/tickets", icon: Ticket, label: "Тикеты", roles: ["admin", "senior_agent", "agent"] },
+  { to: "/employees", icon: Users, label: "Сотрудники", roles: ["admin", "senior_agent"] },
+  { to: "/calendar", icon: Calendar, label: "Календарь", roles: ["admin", "senior_agent", "agent"] },
+  { to: "/polls", icon: BarChart3, label: "Опросы", roles: ["admin", "senior_agent", "agent"] },
+  { to: "/wiki", icon: BookOpen, label: "База знаний", roles: ["admin", "senior_agent", "agent"] },
+  { to: "/news", icon: Newspaper, label: "Новости", roles: ["admin", "senior_agent", "agent"] },
+  { to: "/files", icon: FileText, label: "Файлы", roles: ["admin", "senior_agent", "agent"] },
+  { to: "/tickets/new", icon: PlusCircle, label: "Новый тикет", roles: ["admin", "senior_agent", "agent"] },
 ]
 
 const bottomItems = [
-  { to: "/profile", icon: User, label: "Профиль" },
-  { to: "/login", icon: LogOut, label: "Выйти" },
+  { to: "/admin", icon: Shield, label: "Администрирование", roles: ["admin"] },
+  { to: "/profile", icon: User, label: "Профиль", roles: ["admin", "senior_agent", "agent"] },
+  { to: "/login", icon: LogOut, label: "Выйти", roles: ["admin", "senior_agent", "agent"] },
 ]
 
 export function Sidebar() {
+  const { user } = useAuth()
+  const userRole = user?.role || "agent"
+
+  const filterByRole = (items: typeof navItems) => items.filter(i => i.roles.includes(userRole))
   return (
     <aside className="hidden md:flex md:w-60 flex-col bg-sidebar text-sidebar-foreground h-screen shrink-0">
       <div className="p-5 border-b border-sidebar-border">
@@ -36,7 +42,7 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 p-3 space-y-1">
-        {navItems.map((item) => (
+        {filterByRole(navItems).map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
@@ -57,7 +63,7 @@ export function Sidebar() {
       </nav>
 
       <div className="p-3 border-t border-sidebar-border space-y-1">
-        {bottomItems.map((item) => (
+        {filterByRole(bottomItems).map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
@@ -74,6 +80,11 @@ export function Sidebar() {
             {item.label}
           </NavLink>
         ))}
+        {user && (
+          <div className="px-3 py-2 mt-2 text-[10px] text-sidebar-foreground/40 uppercase tracking-widest font-bold">
+            {user.role === "admin" ? "Администратор" : user.role === "senior_agent" ? "Старший агент" : "Агент"}
+          </div>
+        )}
       </div>
     </aside>
   )

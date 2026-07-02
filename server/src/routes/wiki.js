@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import pool from '../db.js'
-import { authenticateToken } from '../middleware.js'
+import { authenticateToken, requireRole } from '../middleware.js'
 
 const router = Router()
 router.use(authenticateToken)
@@ -27,7 +27,7 @@ router.get('/:id', async (req, res) => {
   }
 })
 
-router.post('/', async (req, res) => {
+router.post('/', requireRole('admin', 'senior_agent'), async (req, res) => {
   const { title, content, category, tags } = req.body
   if (!title?.trim() || !content?.trim()) return res.status(400).json({ message: 'Title and content required' })
   try {
