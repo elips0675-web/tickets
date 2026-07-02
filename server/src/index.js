@@ -10,6 +10,8 @@ import calendarRouter from './routes/calendar.js'
 import pollsRouter from './routes/polls.js'
 import filesRouter from './routes/files.js'
 import chatsRouter from './routes/chats.js'
+import knex from 'knex'
+import knexConfig from '../knexfile.js'
 import { setupSocket } from './socket.js'
 
 const app = express()
@@ -39,6 +41,18 @@ app.get('/api/health', (req, res) => {
 })
 
 setupSocket(server)
+
+// Auto-run migrations on startup
+;(async () => {
+  try {
+    const db = knex(knexConfig)
+    await db.migrate.latest()
+    console.log('Migrations up to date')
+    await db.destroy()
+  } catch (e) {
+    console.error('Migration error:', e.message)
+  }
+})()
 
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err)
