@@ -1,10 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Ticket, Clock, CheckCircle2, AlertTriangle, TrendingUp, Users, BarChart3, Shield, UserCog, User } from "lucide-react"
+import { Ticket, Clock, CheckCircle2, AlertTriangle, TrendingUp, Users, BarChart3 } from "lucide-react"
 import { useTickets } from "@/context/ticket-context"
 import { useNavigate } from "react-router-dom"
-import { formatRelativeTime, cn } from "@/lib/utils"
+import { formatRelativeTime } from "@/lib/utils"
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts"
 
 const statusConfig = {
