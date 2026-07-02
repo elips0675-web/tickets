@@ -41,6 +41,7 @@ export default function App() {
                   <Route path="/chats" element={<ChatsPage />} />
                   <Route path="/chats/:id" element={<ChatDetail />} />
                   <Route path="/profile" element={<ProfilePage />} />
+                  <Route path="/settings" element={<ProfilePage />} />
                   <Route path="/wiki" element={<WikiPage />} />
                   <Route path="/news" element={<NewsPage />} />
                   <Route path="*" element={<NotFound />} />
