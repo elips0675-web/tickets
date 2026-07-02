@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom"
-import { Ticket, LayoutDashboard, Users, PlusCircle, Calendar, BarChart3, FileText, MessageCircle, User, Settings, HelpCircle, LogOut } from "lucide-react"
+import { Ticket, LayoutDashboard, Users, PlusCircle, Calendar, BarChart3, FileText, MessageCircle, User, Settings, HelpCircle, LogOut, BookOpen, Newspaper } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const navItems = [
@@ -9,6 +9,8 @@ const navItems = [
   { to: "/employees", icon: Users, label: "Сотрудники" },
   { to: "/calendar", icon: Calendar, label: "Календарь" },
   { to: "/polls", icon: BarChart3, label: "Опросы" },
+  { to: "/wiki", icon: BookOpen, label: "База знаний" },
+  { to: "/news", icon: Newspaper, label: "Новости" },
   { to: "/files", icon: FileText, label: "Файлы" },
   { to: "/tickets/new", icon: PlusCircle, label: "Новый тикет" },
 ]

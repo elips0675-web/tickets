@@ -9,6 +9,9 @@ import calendarRouter from './routes/calendar.js'
 import pollsRouter from './routes/polls.js'
 import filesRouter from './routes/files.js'
 import chatsRouter from './routes/chats.js'
+import wikiRouter from './routes/wiki.js'
+import newsRouter from './routes/news.js'
+import pushRouter from './routes/push.js'
 import authRouter from './routes/auth.js'
 
 const app = express()
@@ -28,6 +31,9 @@ app.use('/api/calendar', calendarRouter)
 app.use('/api/polls', pollsRouter)
 app.use('/api/files', filesRouter)
 app.use('/api/chats', chatsRouter)
+app.use('/api/wiki', wikiRouter)
+app.use('/api/news', newsRouter)
+app.use('/api/push', pushRouter)
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })

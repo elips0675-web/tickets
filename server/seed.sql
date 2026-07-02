@@ -150,6 +150,53 @@ INSERT INTO poll_options (poll_id, text) VALUES
 (1, 'React + Node.js'), (1, 'Vue + Python'), (1, 'Next.js + Go'),
 (2, 'Всё отлично'), (2, 'Нужно доработать'), (2, 'Неудобно');
 
+CREATE TABLE IF NOT EXISTS wiki_articles (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(300) NOT NULL,
+  content TEXT NOT NULL,
+  category VARCHAR(100) DEFAULT 'Другое',
+  tags JSON DEFAULT NULL,
+  author_id INT NOT NULL,
+  author_name VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (author_id) REFERENCES employees(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO wiki_articles (title, content, category, tags, author_id, author_name) VALUES
+('Как создать заявку', 'Для создания заявки перейдите в раздел «Тикеты» и нажмите «Новый тикет». Заполните форму и отправьте.', 'Руководство', '["тикеты","создание"]', 1, 'Алексей Петров'),
+('Правила работы с инцидентами', 'Критические инциденты должны быть назначены в течение 15 минут. Время реакции — не более 1 часа.', 'Правила', '["инциденты","SLA"]', 1, 'Алексей Петров'),
+('Настройка email-уведомлений', 'Перейдите в Профиль → Настройки. Включите нужные типы уведомлений.', 'Инструкции', '["email","уведомления"]', 2, 'Мария Иванова'),
+('Часто задаваемые вопросы', 'Вопрос: Как сменить пароль? Ответ: Обратитесь к администратору.', 'FAQ', '["вопросы","ответы"]', 3, 'Дмитрий Сидоров'),
+('Интеграция с Telegram', 'Для подключения Telegram-бота обратитесь к IT-отделу.', 'Интеграции', '["telegram","бот"]', 1, 'Алексей Петров');
+
+CREATE TABLE IF NOT EXISTS news_posts (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(300) NOT NULL,
+  content TEXT NOT NULL,
+  important BOOLEAN DEFAULT FALSE,
+  author_id INT NOT NULL,
+  author_name VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (author_id) REFERENCES employees(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO news_posts (title, content, important, author_id, author_name) VALUES
+('Запуск новой версии Service Desk 2.1', 'Сегодня состоялся релиз обновления 2.1. Добавлены: улучшенный поиск по тикетам, новый дизайн дашборда.', TRUE, 1, 'Алексей Петров'),
+('Изменение графика работы техподдержки', 'С 1 июля техподдержка работает с 8:00 до 20:00 по будням.', FALSE, 2, 'Мария Иванова'),
+('Плановые работы на сервере', 'В ночь с 5 на 6 июля с 02:00 до 04:00 будут проводиться технические работы.', TRUE, 1, 'Алексей Петров'),
+('Новый сотрудник в команде', 'Приветствуем Елену Павлову — нового разработчика в отделе IT.', FALSE, 1, 'Алексей Петров'),
+('Обновление правил SLA', 'Обновлены временные рамки для уровней поддержки. Критические инциденты — реакция до 30 минут.', FALSE, 2, 'Мария Иванова');
+
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  subscription_json TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES employees(id) ON DELETE CASCADE,
+  UNIQUE KEY uq_user_sub (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS chat_rooms (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(200) NOT NULL,

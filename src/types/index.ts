@@ -139,3 +139,25 @@ export interface EmployeeProfile {
   bio: string
   online: boolean
 }
+
+export interface WikiArticle {
+  id: number
+  title: string
+  content: string
+  category: string
+  tags: string[]
+  authorId: number
+  authorName: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface NewsPost {
+  id: number
+  title: string
+  content: string
+  important: boolean
+  authorId: number
+  authorName: string
+  createdAt: string
+}
