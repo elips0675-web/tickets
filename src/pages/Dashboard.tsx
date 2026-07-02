@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Ticket, Clock, CheckCircle2, AlertTriangle, TrendingUp, Users, BarChart3 } from "lucide-react"
 import { useTickets } from "@/context/ticket-context"
@@ -89,30 +90,40 @@ export default function Dashboard() {
       </div>
 
       <div>
-        <div className="flex items-center gap-2 mb-4">
-          <Users className="w-5 h-5 text-primary" />
-          <h2 className="font-bold text-lg">Сотрудники онлайн</h2>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Users className="w-5 h-5 text-primary" />
+            <h2 className="font-bold text-lg">Сотрудники</h2>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => navigate('/employees')}>
+            Все сотрудники
+          </Button>
         </div>
-        <div className="flex flex-wrap gap-3">
-          {employees.filter(e => e.online).slice(0, 8).map(emp => (
-            <div key={emp.id} onClick={() => navigate('/employees')} className="flex items-center gap-3 bg-card border rounded-lg px-4 py-2.5 cursor-pointer hover:shadow-sm transition-shadow">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {employees.slice(0, 6).map(emp => (
+            <div key={emp.id} onClick={() => navigate('/employees')} className="flex items-center gap-3 bg-card border rounded-lg p-3 cursor-pointer hover:shadow-sm transition-shadow">
               <div className="relative">
-                <Avatar className="w-9 h-9">
-                  <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                <Avatar className="w-10 h-10">
+                  <AvatarFallback className="text-sm bg-primary/10 text-primary">
                     {emp.name.split(' ').map(n => n[0]).join('')}
                   </AvatarFallback>
                 </Avatar>
-                <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-card rounded-full" />
+                {emp.online && <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-card rounded-full" />}
               </div>
-              <div>
-                <p className="text-sm font-bold">{emp.name}</p>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold truncate">{emp.name}</p>
                 <p className="text-[10px] text-muted-foreground">{emp.department}</p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  {emp.online ? (
+                    <span className="text-[9px] text-green-600 font-medium">Онлайн</span>
+                  ) : (
+                    <span className="text-[9px] text-muted-foreground">Офлайн</span>
+                  )}
+                  <span className="text-[9px] text-muted-foreground">{emp.activeTickets} тикетов</span>
+                </div>
               </div>
             </div>
           ))}
-          {employees.filter(e => e.online).length === 0 && (
-            <p className="text-sm text-muted-foreground">Нет сотрудников онлайн</p>
-          )}
         </div>
       </div>
 
