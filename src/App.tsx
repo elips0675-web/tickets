@@ -2,6 +2,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom"
 import { AppLayout } from "@/components/layout/app-layout"
 import { TicketProvider } from "@/context/ticket-context"
 import { AuthProvider } from "@/context/AuthContext"
+import { SocketProvider } from "@/context/SocketContext"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import Dashboard from "@/pages/Dashboard"
 import Tickets from "@/pages/Tickets"
@@ -24,6 +25,7 @@ export default function App() {
   return (
     <TooltipProvider>
       <AuthProvider>
+      <SocketProvider>
       <TicketProvider>
         <BrowserRouter>
           <Routes>
@@ -52,6 +54,7 @@ export default function App() {
           </Routes>
         </BrowserRouter>
       </TicketProvider>
+      </SocketProvider>
       </AuthProvider>
     </TooltipProvider>
   )

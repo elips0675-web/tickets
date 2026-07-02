@@ -1,5 +1,6 @@
 import 'dotenv/config'
 import express from 'express'
+import { createServer } from 'http'
 import cors from 'cors'
 import helmet from 'helmet'
 import rateLimit from 'express-rate-limit'
@@ -9,12 +10,10 @@ import calendarRouter from './routes/calendar.js'
 import pollsRouter from './routes/polls.js'
 import filesRouter from './routes/files.js'
 import chatsRouter from './routes/chats.js'
-import wikiRouter from './routes/wiki.js'
-import newsRouter from './routes/news.js'
-import pushRouter from './routes/push.js'
-import authRouter from './routes/auth.js'
+import { setupSocket } from './socket.js'
 
 const app = express()
+const server = createServer(app)
 const PORT = process.env.PORT || 4000
 
 const limiter = rateLimit({ windowMs: 60_000, max: 200, message: { message: 'Too many requests' } })
@@ -39,11 +38,13 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })
 })
 
+setupSocket(server)
+
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err)
   res.status(500).json({ message: 'Internal server error' })
 })
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Service Desk API running on port ${PORT}`)
 })

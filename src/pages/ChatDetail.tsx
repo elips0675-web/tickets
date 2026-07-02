@@ -8,8 +8,12 @@ import { ArrowLeft, Send, Smile, Users, Hash, CheckCheck, Edit3, Trash2, Search 
 import { cn, formatTime } from "@/lib/utils"
 import type { ChatRoom, ChatMessage } from "@/types"
 import { motion, AnimatePresence } from "framer-motion"
+import { useSocket } from "@/context/SocketContext"
+import { useAuth } from "@/context/AuthContext"
 
-const DEMO_CHATS: Record<number, { name: string; type: string }> = {
+const QUICK_REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏"]
+
+const CHAT_INFO: Record<number, { name: string; type: string }> = {
   1: { name: "Общий чат", type: "group" },
   2: { name: "Разработка", type: "group" },
   3: { name: "IT-поддержка", type: "channel" },
@@ -22,7 +26,7 @@ const DEMO_CHATS: Record<number, { name: string; type: string }> = {
   10: { name: "Бухгалтерия", type: "channel" },
 }
 
-const DEMO_MESSAGES: Record<number, ChatMessage[]> = {
+const SEED_MESSAGES: Record<number, ChatMessage[]> = {
   1: [
     { id: 1, chatId: 1, senderId: 1, senderName: "Алексей Петров", text: "Коллеги, напоминаю о собрании в 15:00", createdAt: "2026-07-02T14:00:00" },
     { id: 2, chatId: 1, senderId: 2, senderName: "Мария Иванова", text: "Принято, буду", createdAt: "2026-07-02T14:05:00" },
@@ -38,29 +42,37 @@ const DEMO_MESSAGES: Record<number, ChatMessage[]> = {
   ],
 }
 
-const QUICK_REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏"]
-
 export default function ChatDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const chatId = Number(id)
-  const chatInfo = DEMO_CHATS[chatId] || { name: "Чат", type: "personal" }
-  const [messages, setMessages] = useState<ChatMessage[]>(DEMO_MESSAGES[chatId] || [])
+  const { sendMessage, deleteMessage, joinChat, leaveChat, socket } = useSocket()
+  const { user } = useAuth()
+  const [messages, setMessages] = useState<ChatMessage[]>(SEED_MESSAGES[chatId] || [])
   const [input, setInput] = useState("")
   const [showReactions, setShowReactions] = useState<number | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [showSearch, setShowSearch] = useState(false)
   const msgEndRef = useRef<HTMLDivElement>(null)
 
+  const chatInfo = CHAT_INFO[chatId] || { name: "Чат", type: "personal" }
+
+  useEffect(() => { joinChat(chatId); return () => leaveChat(chatId) }, [chatId])
+
+  useEffect(() => {
+    if (!socket) return
+    const onNew = (msg: ChatMessage) => setMessages(prev => [...prev, msg])
+    const onRemove = (msgId: number) => setMessages(prev => prev.filter(m => m.id !== msgId))
+    socket.on("message:new", onNew)
+    socket.on("message:removed", onRemove)
+    return () => { socket.off("message:new", onNew); socket.off("message:removed", onRemove) }
+  }, [socket])
+
   useEffect(() => { msgEndRef.current?.scrollIntoView({ behavior: "smooth" }) }, [messages])
 
   const send = () => {
     if (!input.trim()) return
-    const msg: ChatMessage = {
-      id: Date.now(), chatId, senderId: 0, senderName: "Я",
-      text: input.trim(), createdAt: new Date().toISOString(),
-    }
-    setMessages(prev => [...prev, msg])
+    sendMessage(chatId, input.trim())
     setInput("")
     setTimeout(() => msgEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50)
   }
@@ -82,8 +94,8 @@ export default function ChatDetail() {
     setShowReactions(null)
   }
 
-  const deleteMsg = (msgId: number) => {
-    setMessages(prev => prev.filter(m => m.id !== msgId))
+  const delMsg = (msgId: number) => {
+    deleteMessage(chatId, msgId)
   }
 
   const filteredMsgs = messages.filter(m =>
@@ -91,6 +103,7 @@ export default function ChatDetail() {
   )
 
   const isGroup = chatInfo.type === "group" || chatInfo.type === "channel"
+  const currentUserId = user?.id ?? 0
 
   return (
     <div className="flex flex-col h-[calc(100vh-8rem)] max-w-3xl mx-auto">
@@ -112,26 +125,17 @@ export default function ChatDetail() {
 
       {showSearch && (
         <div className="mb-3">
-          <Input
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            placeholder="Поиск в чате..."
-            className="text-sm"
-            autoFocus
-          />
+          <Input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Поиск в чате..." className="text-sm" autoFocus />
         </div>
       )}
 
       <div className="flex-1 overflow-y-auto space-y-2 pr-1" style={{ scrollBehavior: "smooth" }}>
         <AnimatePresence initial={false}>
           {filteredMsgs.map(msg => {
-            const isMe = msg.senderName === "Я"
+            const isMe = msg.senderId === currentUserId || msg.senderName === "Я"
             const msgReactions = msg.reactions
             return (
-              <motion.div
-                key={msg.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
+              <motion.div key={msg.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                 className={cn("flex", isMe ? "justify-end" : "justify-start")}
               >
                 <div className={cn("max-w-[75%] group", isMe ? "items-end" : "items-start")}>
@@ -152,9 +156,7 @@ export default function ChatDetail() {
                   {msgReactions && Object.keys(msgReactions).length > 0 && (
                     <div className={cn("flex gap-1 mt-1", isMe ? "justify-end" : "justify-start")}>
                       {Object.entries(msgReactions).map(([emoji, users]) => (
-                        <button
-                          key={emoji}
-                          onClick={() => toggleReaction(msg.id, emoji)}
+                        <button key={emoji} onClick={() => toggleReaction(msg.id, emoji)}
                           className={cn(
                             "flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs border text-muted-foreground hover:bg-muted/50 transition-all",
                             users.includes(0) && "bg-primary/10 border-primary/30 text-primary",
@@ -171,8 +173,7 @@ export default function ChatDetail() {
                     isMe ? "right-0" : "left-0",
                   )}>
                     <div className="relative">
-                      <button
-                        onClick={() => setShowReactions(showReactions === msg.id ? null : msg.id)}
+                      <button onClick={() => setShowReactions(showReactions === msg.id ? null : msg.id)}
                         className="p-1 hover:bg-muted rounded-full text-muted-foreground"
                       >
                         <Smile className="w-3 h-3" />
@@ -183,9 +184,7 @@ export default function ChatDetail() {
                           isMe ? "right-0" : "left-0",
                         )}>
                           {QUICK_REACTIONS.map(emoji => (
-                            <button
-                              key={emoji}
-                              onClick={() => toggleReaction(msg.id, emoji)}
+                            <button key={emoji} onClick={() => toggleReaction(msg.id, emoji)}
                               className="w-7 h-7 flex items-center justify-center hover:bg-muted rounded-lg text-sm transition-all active:scale-90"
                             >
                               {emoji}
@@ -195,7 +194,7 @@ export default function ChatDetail() {
                       )}
                     </div>
                     {isMe && (
-                      <button onClick={() => deleteMsg(msg.id)} className="p-1 hover:bg-muted rounded-full text-muted-foreground">
+                      <button onClick={() => delMsg(msg.id)} className="p-1 hover:bg-muted rounded-full text-muted-foreground">
                         <Trash2 className="w-3 h-3" />
                       </button>
                     )}
@@ -209,12 +208,9 @@ export default function ChatDetail() {
       </div>
 
       <div className="flex items-center gap-2 pt-3 border-t mt-3">
-        <Input
-          value={input}
-          onChange={e => setInput(e.target.value)}
+        <Input value={input} onChange={e => setInput(e.target.value)}
           onKeyDown={e => { if (e.key === "Enter") send() }}
-          placeholder="Написать сообщение..."
-          className="flex-1 h-10 text-sm"
+          placeholder="Написать сообщение..." className="flex-1 h-10 text-sm"
         />
         <Button size="icon" onClick={send} disabled={!input.trim()} className="h-10 w-10 rounded-xl shrink-0">
           <Send className="w-4 h-4" />
