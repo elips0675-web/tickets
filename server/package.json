@@ -8,7 +8,9 @@
     "migrate": "knex migrate:latest --knexfile knexfile.js",
     "migrate:rollback": "knex migrate:rollback --knexfile knexfile.js",
     "seed": "knex seed:run --knexfile knexfile.js",
-    "setup": "knex migrate:latest --knexfile knexfile.js && knex seed:run --knexfile knexfile.js"
+    "setup": "knex migrate:latest --knexfile knexfile.js && knex seed:run --knexfile knexfile.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -20,6 +22,8 @@
     "jsonwebtoken": "^9.0.2",
     "knex": "^3.3.0",
     "mysql2": "^3.11.0",
-    "socket.io": "^4.8.3"
+    "socket.io": "^4.8.3",
+    "supertest": "^7.2.2",
+    "vitest": "^4.1.9"
   }
 }
