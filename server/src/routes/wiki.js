@@ -1,6 +1,23 @@
 import { Router } from 'express'
+import path from 'path'
+import fs from 'fs'
+import { fileURLToPath } from 'url'
+import multer from 'multer'
 import pool from '../db.js'
 import { authenticateToken, requireRole } from '../middleware.js'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const wikiUploads = path.join(__dirname, '..', '..', 'uploads', 'wiki')
+fs.mkdirSync(wikiUploads, { recursive: true })
+
+const storage = multer.diskStorage({
+  destination: wikiUploads,
+  filename: (req, file, cb) => {
+    const unique = Date.now() + '-' + Math.round(Math.random() * 1E9)
+    cb(null, unique + '-' + file.originalname)
+  },
+})
+const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } })
 
 const router = Router()
 router.use(authenticateToken)
@@ -41,6 +58,12 @@ router.post('/', requireRole('admin', 'senior_agent'), async (req, res) => {
     console.error('Create article error:', err)
     res.status(500).json({ message: 'Failed to create article' })
   }
+})
+
+router.post('/upload-image', requireRole('admin', 'senior_agent'), upload.single('image'), (req, res) => {
+  if (!req.file) return res.status(400).json({ message: 'No file uploaded' })
+  const url = `/uploads/wiki/${req.file.filename}`
+  res.json({ url })
 })
 
 export default router

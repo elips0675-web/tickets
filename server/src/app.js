@@ -17,6 +17,9 @@ import searchRouter from './routes/search.js'
 import pushRouter from './routes/push.js'
 import authRouter from './routes/auth.js'
 import adminRouter from './routes/admin.js'
+import path from 'path'
+import { fileURLToPath } from 'url'
+import multer from 'multer'
 import knex from 'knex'
 import knexConfig from '../knexfile.js'
 
@@ -28,6 +31,9 @@ app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }))
 app.use(helmet())
 app.use(express.json())
 app.use('/api/', limiter)
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')))
 
 app.use('/api/auth', authRouter)
 app.use('/api/tickets', ticketsRouter)

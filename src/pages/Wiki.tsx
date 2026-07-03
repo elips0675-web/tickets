@@ -1,11 +1,11 @@
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, BookOpen, Plus, Clock, User, Tag, Layers, Loader2 } from "lucide-react"
+import { Search, BookOpen, Plus, Clock, User, Tag, Layers, Loader2, ImageIcon } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import type { WikiArticle } from "@/types"
 import { useAuth } from "@/context/AuthContext"
@@ -40,6 +40,29 @@ export default function WikiPage() {
   const [newContent, setNewContent] = useState("")
   const [newCategory, setNewCategory] = useState("Руководство")
   const [newTags, setNewTags] = useState("")
+  const imageInputRef = useRef<HTMLInputElement>(null)
+  const [uploadingImg, setUploadingImg] = useState(false)
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingImg(true)
+    const form = new FormData()
+    form.append("image", file)
+    try {
+      const res = await fetch(`${API}/wiki/upload-image`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      })
+      if (res.ok) {
+        const { url } = await res.json()
+        setNewContent(prev => prev + `\n\n![${file.name}](${url})\n`)
+      }
+    } catch { /* ignore */ }
+    setUploadingImg(false)
+    if (imageInputRef.current) imageInputRef.current.value = ""
+  }
 
   useEffect(() => {
     fetch(`${API}/wiki`, { headers: { Authorization: `Bearer ${token}` } })
@@ -116,6 +139,13 @@ export default function WikiPage() {
                   </SelectContent>
                 </Select>
                 <Input value={newTags} onChange={e => setNewTags(e.target.value)} placeholder="Теги через запятую" className="w-1/2" />
+              </div>
+              <div className="flex gap-2">
+                <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                <Button variant="outline" type="button" onClick={() => imageInputRef.current?.click()} disabled={uploadingImg}>
+                  {uploadingImg ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
+                  {uploadingImg ? "Загрузка..." : "Добавить изображение"}
+                </Button>
               </div>
               <Button onClick={handleCreate} className="w-full">Создать</Button>
             </div>
