@@ -23,6 +23,8 @@ import SearchPage from "@/pages/Search"
 import NewsPage from "@/pages/News"
 import KanbanPage from "@/pages/Kanban"
 import Login from "@/pages/Login"
+import ForgotPassword from "@/pages/ForgotPassword"
+import ResetPassword from "@/pages/ResetPassword"
 import Register from "@/pages/Register"
 import Admin from "@/pages/Admin"
 import AdminUsers from "@/pages/AdminUsers"
@@ -41,6 +43,8 @@ export default function App() {
         <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/register" element={<ProtectedRoute adminOnly><Register /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute adminOnly><AdminLayout><Admin /></AdminLayout></ProtectedRoute>} />
             <Route path="/admin/users" element={<ProtectedRoute adminOnly><AdminLayout><AdminUsers /></AdminLayout></ProtectedRoute>} />

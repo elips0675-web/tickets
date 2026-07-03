@@ -97,6 +97,11 @@ export default function Login() {
                 required
               />
             </div>
+            <div className="flex justify-end">
+              <Link to="/forgot-password" className="text-xs text-primary hover:underline">
+                Забыли пароль?
+              </Link>
+            </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Вход..." : "Войти"}
             </Button>
