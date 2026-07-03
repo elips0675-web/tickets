@@ -27,7 +27,7 @@ export async function seed(knex) {
   await knex('tickets').insert([
     { id: 1, title: 'Не работает отправка email', description: 'После обновления сервера перестала работать отправка писем через SMTP', status: 'in_progress', priority: 'high', category: 'bug', created_by: 10, assigned_to: 1 },
     { id: 2, title: 'Добавить экспорт в Excel', description: 'Необходимо добавить кнопку экспорта списка пользователей в Excel', status: 'open', priority: 'medium', category: 'feature', created_by: 11 },
-    { id: 3, title: 'Сбой авторизации через Telegram', description: 'При входе через Telegram выдает ошибку 500', status: 'critical', priority: 'critical', category: 'incident', created_by: 12, assigned_to: 2 },
+    { id: 3, title: 'Сбой авторизации через Telegram', description: 'При входе через Telegram выдает ошибку 500', status: 'open', priority: 'critical', category: 'incident', created_by: 12, assigned_to: 2 },
     { id: 4, title: 'Обновить документацию API', description: 'Старая документация не соответствует актуальным эндпоинтам', status: 'open', priority: 'low', category: 'other', created_by: 13 },
     { id: 5, title: 'Медленная загрузка чатов', description: 'При открытии списка чатов загрузка более 10 секунд', status: 'resolved', priority: 'high', category: 'bug', created_by: 10, assigned_to: 4 },
   ])

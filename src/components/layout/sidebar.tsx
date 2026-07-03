@@ -25,12 +25,20 @@ const bottomItems = [
 ]
 
 export function Sidebar() {
+  return (
+    <aside className="hidden md:flex md:w-60 flex-col bg-sidebar text-sidebar-foreground h-screen shrink-0">
+      <SidebarContent />
+    </aside>
+  )
+}
+
+export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { user } = useAuth()
   const userRole = user?.role || "agent"
 
   const filterByRole = (items: typeof navItems) => items.filter(i => i.roles.includes(userRole))
   return (
-    <aside className="hidden md:flex md:w-60 flex-col bg-sidebar text-sidebar-foreground h-screen shrink-0">
+    <>
       <div className="p-5 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
@@ -49,6 +57,7 @@ export function Sidebar() {
             key={item.to}
             to={item.to}
             end={item.to === "/"}
+            onClick={onNavigate}
             className={({ isActive }) =>
               cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-bold transition-colors",
@@ -69,6 +78,7 @@ export function Sidebar() {
           <NavLink
             key={item.to}
             to={item.to}
+            onClick={onNavigate}
             className={({ isActive }) =>
               cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-bold transition-colors",
@@ -88,6 +98,6 @@ export function Sidebar() {
           </div>
         )}
       </div>
-    </aside>
+    </>
   )
 }
