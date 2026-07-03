@@ -122,6 +122,7 @@ export interface ChatMessage {
   senderId: number
   senderName: string
   text: string
+  image?: string
   createdAt: string
   edited?: boolean
   reactions?: Record<string, number[]>

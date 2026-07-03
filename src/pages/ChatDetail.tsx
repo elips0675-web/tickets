@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Send, Smile, Users, Hash, CheckCheck, Edit3, Trash2, Search } from "lucide-react"
+import { ArrowLeft, Send, Smile, Users, CheckCheck, Trash2, Search, ImagePlus, X } from "lucide-react"
 import { cn, formatTime } from "@/lib/utils"
 import type { ChatRoom, ChatMessage } from "@/types"
 import { motion, AnimatePresence } from "framer-motion"
@@ -53,6 +53,9 @@ export default function ChatDetail() {
   const [showReactions, setShowReactions] = useState<number | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [showSearch, setShowSearch] = useState(false)
+  const [imageFile, setImageFile] = useState<string | null>(null)
+  const [previewImg, setPreviewImg] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const msgEndRef = useRef<HTMLDivElement>(null)
 
   const chatInfo = CHAT_INFO[chatId] || { name: "Чат", type: "personal" }
@@ -71,10 +74,31 @@ export default function ChatDetail() {
   useEffect(() => { msgEndRef.current?.scrollIntoView({ behavior: "smooth" }) }, [messages])
 
   const send = () => {
-    if (!input.trim()) return
-    sendMessage(chatId, input.trim())
+    if (!input.trim() && !imageFile) return
+    const msg: Partial<ChatMessage> = {
+      id: Date.now(),
+      chatId,
+      senderId: currentUserId,
+      senderName: "Я",
+      text: input.trim(),
+      image: imageFile || undefined,
+      createdAt: new Date().toISOString(),
+    }
+    setMessages(prev => [...prev, msg as ChatMessage])
     setInput("")
+    setImageFile(null)
     setTimeout(() => msgEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50)
+  }
+
+  const pickImage = () => fileInputRef.current?.click()
+
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => setImageFile(reader.result as string)
+    reader.readAsDataURL(file)
+    e.target.value = ""
   }
 
   const toggleReaction = (msgId: number, emoji: string) => {
@@ -96,6 +120,7 @@ export default function ChatDetail() {
 
   const delMsg = (msgId: number) => {
     deleteMessage(chatId, msgId)
+    setMessages(prev => prev.filter(m => m.id !== msgId))
   }
 
   const filteredMsgs = messages.filter(m =>
@@ -106,7 +131,7 @@ export default function ChatDetail() {
   const currentUserId = user?.id ?? 0
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] max-w-3xl mx-auto">
+    <><div className="flex flex-col h-[calc(100vh-8rem)] max-w-3xl mx-auto">
       <div className="flex items-center gap-3 mb-4">
         <Button variant="ghost" size="icon" onClick={() => navigate("/chats")} className="rounded-full">
           <ArrowLeft className="w-5 h-5" />
@@ -143,10 +168,18 @@ export default function ChatDetail() {
                     <p className="text-[10px] font-bold text-muted-foreground mb-1 ml-1">{msg.senderName}</p>
                   )}
                   <div className={cn(
-                    "relative px-3 py-2 rounded-xl text-sm shadow-sm",
+                    "relative px-3 py-2 rounded-xl text-sm shadow-sm overflow-hidden",
                     isMe ? "bg-primary text-primary-foreground rounded-br-md" : "bg-card border rounded-bl-md",
                   )}>
-                    <p className="leading-snug">{msg.text}</p>
+                    {msg.image && (
+                      <img
+                        src={msg.image}
+                        alt=""
+                        onClick={() => setPreviewImg(msg.image!)}
+                        className="max-w-full max-h-60 rounded-lg mb-2 cursor-pointer hover:opacity-90 transition-opacity object-cover"
+                      />
+                    )}
+                    {msg.text && <p className="leading-snug">{msg.text}</p>}
                     <div className={cn("flex items-center gap-1 mt-1", isMe ? "justify-end" : "justify-start")}>
                       <span className="text-[9px] opacity-60">{formatTime(msg.createdAt)}</span>
                       {isMe && <CheckCheck className="w-3 h-3 opacity-60" />}
@@ -207,15 +240,42 @@ export default function ChatDetail() {
         <div ref={msgEndRef} />
       </div>
 
-      <div className="flex items-center gap-2 pt-3 border-t mt-3">
-        <Input value={input} onChange={e => setInput(e.target.value)}
-          onKeyDown={e => { if (e.key === "Enter") send() }}
-          placeholder="Написать сообщение..." className="flex-1 h-10 text-sm"
-        />
-        <Button size="icon" onClick={send} disabled={!input.trim()} className="h-10 w-10 rounded-xl shrink-0">
-          <Send className="w-4 h-4" />
-        </Button>
+      <div className="space-y-2 pt-3 border-t mt-3">
+        {imageFile && (
+          <div className="relative inline-block rounded-lg overflow-hidden border">
+            <img src={imageFile} alt="" className="max-h-24 object-cover" />
+            <button onClick={() => setImageFile(null)}
+              className="absolute top-1 right-1 w-5 h-5 bg-black/50 rounded-full flex items-center justify-center hover:bg-black/70 transition-colors"
+            >
+              <X className="w-3 h-3 text-white" />
+            </button>
+          </div>
+        )}
+        <div className="flex items-center gap-2">
+          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+          <Button variant="ghost" size="icon" onClick={pickImage} className="h-10 w-10 rounded-xl shrink-0 text-muted-foreground hover:text-foreground">
+            <ImagePlus className="w-4 h-4" />
+          </Button>
+          <Input value={input} onChange={e => setInput(e.target.value)}
+            onKeyDown={e => { if (e.key === "Enter") send() }}
+            placeholder="Написать сообщение..." className="flex-1 h-10 text-sm"
+          />
+          <Button size="icon" onClick={send} disabled={!input.trim() && !imageFile} className="h-10 w-10 rounded-xl shrink-0">
+            <Send className="w-4 h-4" />
+          </Button>
+        </div>
       </div>
     </div>
-  )
+
+      {previewImg && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={() => setPreviewImg(null)}>
+          <button onClick={() => setPreviewImg(null)}
+            className="absolute top-4 right-4 w-8 h-8 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors"
+          >
+            <X className="w-5 h-5 text-white" />
+          </button>
+          <img src={previewImg} alt="" className="max-w-full max-h-full object-contain rounded-lg" onClick={e => e.stopPropagation()} />
+        </div>
+      )}
+    </>
 }
