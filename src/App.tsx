@@ -6,7 +6,6 @@ import { TicketProvider } from "@/context/ticket-context"
 import { AuthProvider } from "@/context/AuthContext"
 import { SocketProvider } from "@/context/SocketContext"
 import { TooltipProvider } from "@/components/ui/tooltip"
-import { ThemeProvider } from "@/context/ThemeContext"
 import Dashboard from "@/pages/Dashboard"
 import Tickets from "@/pages/Tickets"
 import TicketDetail from "@/pages/TicketDetail"
@@ -33,7 +32,6 @@ import ProtectedRoute from "@/components/ProtectedRoute"
 export default function App() {
   return (
     <TooltipProvider>
-      <ThemeProvider>
       <AuthProvider>
       <SocketProvider>
       <TicketProvider>
@@ -74,7 +72,6 @@ export default function App() {
       </TicketProvider>
       </SocketProvider>
       </AuthProvider>
-      </ThemeProvider>
     </TooltipProvider>
   )
 }

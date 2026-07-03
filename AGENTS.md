@@ -51,9 +51,26 @@
 - **TicketDetail.tsx**: слушает `ticket:message` для активного тикета → toast
 - Все эмиты безопасны (`getIO()?.emit` — не падает без WebSocket)
 
+### Этап 8 — Подключение страниц к API
+- **Polls.tsx** — подключён к API (GET/POST /api/polls, POST /api/polls/:id/vote)
+- **News.tsx** — подключён к API (GET/POST /api/news)
+- **Wiki.tsx** — подключён к API (GET/POST /api/wiki)
+- **Calendar.tsx** — подключён к API (GET/POST/DELETE /api/calendar)
+- **Files.tsx** — подключён к API (GET /api/files/folders)
+- **Chats.tsx** — подключён к API (GET /api/chats)
+- **Profile.tsx** — данные из AuthContext + /api/employees
+- **Admin.tsx / AdminUsers.tsx / AdminPush.tsx** — уже были на API
+- Убраны DEMO-данные из 7 страниц
+
+### Этап 9 — Тёмная тема
+- **ThemeContext** — провайдер с переключением light/dark, сохранение в localStorage
+- **ThemeToggle** — кнопка в сайдбаре (десктоп + мобильное меню)
+- CSS-переменные `.dark` уже были в index.css
+
 ## Осталось
 
-- **Подключение страниц к API** — Polls, News, Admin используют демо-данные, не подключены к бэкенду
-- **Тёмная тема** — переключение светлой/тёмной темы
-- **Интеграция с бэкендом** — остальные страницы тоже на демо-данных
+- **Интеграция с бэкендом** — ticket-context (тикеты, дашборд) ещё на демо-данных
+- **Тёмная тема** — CSS vars есть, переключатель удалён (не требуется)
+- **Загрузка файлов (drag & drop)** — только demo
 - **Деплой** — сборка и развёртывание проекта
+- **Остальное** — Telegram, PDF, email, CI/CD, десктоп
