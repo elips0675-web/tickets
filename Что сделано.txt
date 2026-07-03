@@ -135,6 +135,8 @@
 │ Docker + compose                 │ ✅              │
 │ CSV-экспорт тикетов              │ ✅              │
 │ RBAC (роли middleware + UI)      │ ✅              │
+│ Страницы подключены к API         │ ✅              │
+│ (кроме загрузки файлов)          │                 │
 │ PWA (service worker + manifest)  │ ✅              │
 │ Push-уведомления (SW + subscr.)  │ ✅              │
 │ Глобальный поиск (6 таблиц)      │ ✅              │

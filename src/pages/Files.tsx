@@ -1,12 +1,13 @@
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useRef, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Search, Grid3X3, List, FileText, Image, FileCode, File, Folder, Loader2 } from "lucide-react"
+import { Search, Grid3X3, List, FileText, Image, FileCode, File, Folder, Loader2, Upload, X } from "lucide-react"
 import type { FileItem, FileFolder } from "@/types"
 import { useAuth } from "@/context/AuthContext"
+import { toast } from "sonner"
 
 const API = "http://localhost:4000/api"
 
@@ -26,8 +27,12 @@ export default function FilesPage() {
   const [category, setCategory] = useState("all")
   const [search, setSearch] = useState("")
   const [view, setView] = useState<"grid" | "list">("grid")
+  const [dragging, setDragging] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const dragCounter = useRef(0)
 
-  useEffect(() => {
+  const fetchFolders = useCallback(() => {
     fetch(`${API}/files/folders`, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => res.ok ? res.json() : [])
       .then(data => {
@@ -48,7 +53,52 @@ export default function FilesPage() {
         setLoading(false)
       })
       .catch(() => setLoading(false))
-  }, [token])
+  }, [token, activeFolder])
+
+  useEffect(() => { fetchFolders() }, [fetchFolders])
+
+  const uploadFile = async (file: File) => {
+    setUploading(true)
+    const ext = file.name.split('.').pop() || ''
+    const typeMap: Record<string, string> = { png: 'img', jpg: 'img', jpeg: 'img', gif: 'img', svg: 'img', pdf: 'pdf', doc: 'doc', docx: 'doc', xls: 'doc', xlsx: 'doc', ts: 'code', tsx: 'code', js: 'code', jsx: 'code', py: 'code', sh: 'code', css: 'code', html: 'code' }
+    const fileType = typeMap[ext.toLowerCase()] || 'file'
+    const sizeKB = (file.size / 1024).toFixed(file.size > 1024 * 1024 ? 2 : 0)
+    const sizeStr = file.size > 1024 * 1024 ? (file.size / 1024 / 1024).toFixed(1) + ' MB' : sizeKB + ' KB'
+    try {
+      const res = await fetch(`${API}/files/upload`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ name: file.name, size: sizeStr, type: fileType, folderId: activeFolder }),
+      })
+      if (res.ok) {
+        toast.success(`Файл загружен: ${file.name}`)
+        fetchFolders()
+      }
+    } catch { toast.error("Ошибка загрузки") }
+    setUploading(false)
+  }
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    dragCounter.current = 0
+    setDragging(false)
+    const files = Array.from(e.dataTransfer.files)
+    files.forEach(uploadFile)
+  }, [activeFolder, token])
+
+  const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); setDragging(true) }
+  const handleDragEnter = (e: React.DragEvent) => { e.preventDefault(); dragCounter.current++; setDragging(true) }
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    dragCounter.current--
+    if (dragCounter.current === 0) setDragging(false)
+  }
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    files.forEach(uploadFile)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
 
   const currentFolder = folders.find(f => f.id === activeFolder)
   const allFiles = useMemo(() => folders.flatMap(f => f.files.map(file => ({ ...file, folder: f.name }))), [folders])
@@ -61,11 +111,36 @@ export default function FilesPage() {
   }, [search, allFiles, currentFolder, category])
 
   return (
-    <div className="space-y-6">
+    <div
+      className="space-y-6"
+      onDrop={handleDrop}
+      onDragOver={handleDragOver}
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+    >
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Файлы</h1>
         <p className="text-sm text-muted-foreground mt-1">Управление файлами и документами</p>
       </div>
+
+      {dragging && (
+        <div className="fixed inset-0 z-50 bg-primary/10 flex items-center justify-center pointer-events-none">
+          <div className="bg-background border-2 border-dashed border-primary rounded-2xl p-12 text-center">
+            <Upload className="w-12 h-12 mx-auto mb-3 text-primary" />
+            <p className="font-bold text-lg">Отпустите файлы для загрузки</p>
+          </div>
+        </div>
+      )}
+
+      <Card className="border-dashed border-2 bg-muted/20">
+        <CardContent className="p-6 text-center" onClick={() => fileInputRef.current?.click()}>
+          <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileSelect} />
+          <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+          <p className="font-bold text-sm">Перетащите файлы сюда</p>
+          <p className="text-xs text-muted-foreground mt-1">или нажмите для выбора</p>
+          {uploading && <Loader2 className="w-4 h-4 animate-spin mx-auto mt-2 text-primary" />}
+        </CardContent>
+      </Card>
 
       {loading ? (
         <div className="flex justify-center py-16">
