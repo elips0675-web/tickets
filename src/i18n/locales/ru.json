@@ -1,0 +1,152 @@
+{
+  "nav": {
+    "dashboard": "Дашборд",
+    "tickets": "Тикеты",
+    "employees": "Сотрудники",
+    "chats": "Чаты",
+    "calendar": "Календарь",
+    "polls": "Опросы",
+    "files": "Файлы",
+    "wiki": "База знаний",
+    "news": "Новости",
+    "kanban": "Канбан",
+    "search": "Поиск",
+    "profile": "Профиль",
+    "admin": "Админ",
+    "more": "Ещё"
+  },
+  "common": {
+    "search": "Поиск",
+    "create": "Создать",
+    "save": "Сохранить",
+    "cancel": "Отмена",
+    "delete": "Удалить",
+    "edit": "Редактировать",
+    "loading": "Загрузка...",
+    "notFound": "Не найдено",
+    "noResults": "Ничего не найдено",
+    "back": "Назад",
+    "close": "Закрыть",
+    "confirm": "Подтвердить",
+    "all": "Все"
+  },
+  "auth": {
+    "login": "Войти",
+    "register": "Регистрация",
+    "logout": "Выйти",
+    "email": "Email",
+    "password": "Пароль",
+    "name": "Имя",
+    "role": "Роль",
+    "devLogin": "Dev-логин",
+    "loginTitle": "Вход в систему",
+    "registerTitle": "Создание аккаунта",
+    "noAccount": "Нет аккаунта?",
+    "hasAccount": "Уже есть аккаунт?"
+  },
+  "tickets": {
+    "title": "Тикеты",
+    "new": "Новый тикет",
+    "total": "{count} всего",
+    "search": "Поиск тикетов...",
+    "allStatuses": "Все статусы",
+    "allPriorities": "Все приоритеты",
+    "status": "Статус",
+    "priority": "Приоритет",
+    "category": "Категория",
+    "open": "Открытые",
+    "inProgress": "В работе",
+    "resolved": "Решённые",
+    "closed": "Закрытые",
+    "low": "Низкий",
+    "medium": "Средний",
+    "high": "Высокий",
+    "critical": "Критичный",
+    "assignedTo": "Исполнитель",
+    "createdBy": "Создал",
+    "messages": "Сообщения",
+    "notFound": "Тикеты не найдены",
+    "tryAdjust": "Попробуйте изменить параметры поиска",
+    "showMore": "Показать ещё",
+    "exportCSV": "CSV",
+    "exportPDF": "PDF"
+  },
+  "dashboard": {
+    "title": "Дашборд",
+    "total": "Всего",
+    "open": "Открытые",
+    "inProgress": "В работе",
+    "resolved": "Решённые",
+    "critical": "Критичные",
+    "avgTime": "Среднее время решения",
+    "hours": "ч",
+    "byStatus": "Тикеты по статусам",
+    "recentUpdates": "Последние обновления",
+    "noUpdates": "Нет обновлений"
+  },
+  "employees": {
+    "title": "Сотрудники",
+    "search": "Поиск сотрудников...",
+    "online": "Онлайн",
+    "offline": "Офлайн",
+    "department": "Отдел",
+    "activeTickets": "Активных тикетов",
+    "resolvedToday": "Решено сегодня"
+  },
+  "chats": {
+    "title": "Чаты",
+    "search": "Поиск чатов...",
+    "newMessage": "Новое сообщение",
+    "typeMessage": "Напишите сообщение...",
+    "noMessages": "Сообщений пока нет",
+    "deleteMessage": "Удалить сообщение",
+    "personal": "Личные",
+    "general": "Общие"
+  },
+  "calendar": {
+    "title": "Календарь",
+    "today": "Сегодня",
+    "createEvent": "Создать событие",
+    "deleteEvent": "Удалить",
+    "noEvents": "Нет событий",
+    "upcoming": "Ближайшие события"
+  },
+  "polls": {
+    "title": "Опросы",
+    "create": "Создать опрос",
+    "vote": "Голосовать",
+    "totalVotes": "Всего голосов",
+    "noPolls": "Опросов пока нет"
+  },
+  "files": {
+    "title": "Файлы",
+    "dropzone": "Перетащите файлы сюда или нажмите для выбора",
+    "uploading": "Загрузка...",
+    "empty": "Папка пуста",
+    "searchInFolder": "Поиск в папке...",
+    "searchAll": "Поиск по всем файлам..."
+  },
+  "wiki": {
+    "title": "База знаний",
+    "create": "Новая статья",
+    "addImage": "Добавить изображение",
+    "uploading": "Загрузка...",
+    "noArticles": "Статьи не найдены",
+    "allCategories": "Все",
+    "contentPlaceholder": "Содержание (Markdown)",
+    "tagsPlaceholder": "Теги через запятую"
+  },
+  "profile": {
+    "title": "Профиль",
+    "myFiles": "Мои файлы",
+    "settings": "Настройки",
+    "editProfile": "Редактировать профиль"
+  },
+  "admin": {
+    "title": "Админ-панель",
+    "users": "Пользователи",
+    "push": "Push-уведомления",
+    "blocked": "Заблокирован",
+    "active": "Активен"
+  }
+}

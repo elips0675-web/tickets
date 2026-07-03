@@ -1,0 +1,152 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "tickets": "Tickets",
+    "employees": "Employees",
+    "chats": "Chats",
+    "calendar": "Calendar",
+    "polls": "Polls",
+    "files": "Files",
+    "wiki": "Wiki",
+    "news": "News",
+    "kanban": "Kanban",
+    "search": "Search",
+    "profile": "Profile",
+    "admin": "Admin",
+    "more": "More"
+  },
+  "common": {
+    "search": "Search",
+    "create": "Create",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "loading": "Loading...",
+    "notFound": "Not found",
+    "noResults": "No results found",
+    "back": "Back",
+    "close": "Close",
+    "confirm": "Confirm",
+    "all": "All"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "email": "Email",
+    "password": "Password",
+    "name": "Name",
+    "role": "Role",
+    "devLogin": "Dev Login",
+    "loginTitle": "Sign in to your account",
+    "registerTitle": "Create an account",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?"
+  },
+  "tickets": {
+    "title": "Tickets",
+    "new": "New Ticket",
+    "total": "{count} total",
+    "search": "Search tickets...",
+    "allStatuses": "All statuses",
+    "allPriorities": "All priorities",
+    "status": "Status",
+    "priority": "Priority",
+    "category": "Category",
+    "open": "Open",
+    "inProgress": "In Progress",
+    "resolved": "Resolved",
+    "closed": "Closed",
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High",
+    "critical": "Critical",
+    "assignedTo": "Assignee",
+    "createdBy": "Created by",
+    "messages": "Messages",
+    "notFound": "Tickets not found",
+    "tryAdjust": "Try changing search parameters",
+    "showMore": "Show more",
+    "exportCSV": "CSV",
+    "exportPDF": "PDF"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "total": "Total",
+    "open": "Open",
+    "inProgress": "In Progress",
+    "resolved": "Resolved",
+    "critical": "Critical",
+    "avgTime": "Avg. Resolution Time",
+    "hours": "hours",
+    "byStatus": "Tickets by Status",
+    "recentUpdates": "Recent Updates",
+    "noUpdates": "No recent updates"
+  },
+  "employees": {
+    "title": "Employees",
+    "search": "Search employees...",
+    "online": "Online",
+    "offline": "Offline",
+    "department": "Department",
+    "activeTickets": "Active tickets",
+    "resolvedToday": "Resolved today"
+  },
+  "chats": {
+    "title": "Chats",
+    "search": "Search chats...",
+    "newMessage": "New message",
+    "typeMessage": "Type a message...",
+    "noMessages": "No messages yet",
+    "deleteMessage": "Delete message",
+    "personal": "Personal",
+    "general": "General"
+  },
+  "calendar": {
+    "title": "Calendar",
+    "today": "Today",
+    "createEvent": "New Event",
+    "deleteEvent": "Delete",
+    "noEvents": "No events this day",
+    "upcoming": "Upcoming Events"
+  },
+  "polls": {
+    "title": "Polls",
+    "create": "Create Poll",
+    "vote": "Vote",
+    "totalVotes": "Total votes",
+    "noPolls": "No polls yet"
+  },
+  "files": {
+    "title": "Files",
+    "dropzone": "Drop files here or click to select",
+    "uploading": "Uploading...",
+    "empty": "Folder is empty",
+    "searchInFolder": "Search in folder...",
+    "searchAll": "Search all files..."
+  },
+  "wiki": {
+    "title": "Wiki",
+    "create": "New Article",
+    "addImage": "Add Image",
+    "uploading": "Uploading...",
+    "noArticles": "Articles not found",
+    "allCategories": "All",
+    "contentPlaceholder": "Content (Markdown)",
+    "tagsPlaceholder": "Tags (comma separated)"
+  },
+  "profile": {
+    "title": "Profile",
+    "myFiles": "My Files",
+    "settings": "Settings",
+    "editProfile": "Edit Profile"
+  },
+  "admin": {
+    "title": "Admin",
+    "users": "Users",
+    "push": "Push Notifications",
+    "blocked": "Blocked",
+    "active": "Active"
+  }
+}

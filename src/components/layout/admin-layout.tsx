@@ -2,31 +2,34 @@ import { NavLink, useNavigate } from "react-router-dom"
 import { Shield, LayoutDashboard, Users, Bell, ArrowLeft, LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/context/AuthContext"
+import { useTranslation } from "react-i18next"
+import LanguageSwitcher from "@/components/LanguageSwitcher"
 
 const adminNavItems = [
-  { to: "/admin", icon: LayoutDashboard, label: "Дашборд", end: true },
-  { to: "/admin/users", icon: Users, label: "Пользователи" },
-  { to: "/admin/push", icon: Bell, label: "Push-уведомления" },
+  { to: "/admin", icon: LayoutDashboard, labelKey: "dashboard.title", end: true },
+  { to: "/admin/users", icon: Users, labelKey: "admin.users" },
+  { to: "/admin/push", icon: Bell, labelKey: "admin.push" },
 ]
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth()
+  const { t } = useTranslation()
   const navigate = useNavigate()
 
   if (user?.role !== "admin") {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <Shield className="w-16 h-16 text-muted-foreground/40" />
-        <div className="text-center">
-          <h2 className="text-xl font-bold">Нет доступа</h2>
-          <p className="text-sm text-muted-foreground mt-1">Только администратор может просматривать эту страницу</p>
-        </div>
-        <button
-          onClick={() => navigate("/")}
-          className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
-        >
-          <ArrowLeft className="w-4 h-4" /> На главную
-        </button>
+          <div className="text-center">
+            <h2 className="text-xl font-bold">{t("common.notFound")}</h2>
+            <p className="text-sm text-muted-foreground mt-1">{t("admin.title")}</p>
+          </div>
+          <button
+            onClick={() => navigate("/")}
+            className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
+          >
+            <ArrowLeft className="w-4 h-4" /> {t("common.back")}
+          </button>
       </div>
     )
   }
@@ -40,7 +43,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
               <Shield className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h1 className="font-bold text-sm leading-tight">Админ-панель</h1>
+              <h1 className="font-bold text-sm leading-tight">{t("admin.title")}</h1>
               <p className="text-[8px] text-sidebar-foreground/50 font-bold uppercase tracking-widest">Service Desk</p>
             </div>
           </div>
@@ -61,7 +64,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
               }
             >
               <item.icon className="w-4 h-4" />
-              {item.label}
+              {t(item.labelKey)}
             </NavLink>
           ))}
         </nav>
@@ -71,15 +74,16 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
             className="flex w-full items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-bold transition-colors text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
           >
             <ArrowLeft className="w-4 h-4" />
-            На главную
+            {t("common.back")}
           </button>
           <button
             onClick={() => { logout(); window.location.href = "/login" }}
             className="flex w-full items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-bold transition-colors text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
           >
             <LogOut className="w-4 h-4" />
-            Выйти
+            {t("auth.logout")}
           </button>
+          <LanguageSwitcher />
         </div>
       </aside>
       <div className="flex flex-col flex-1 min-w-0">
@@ -92,13 +96,14 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
 function MobileAdminHeader() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   return (
     <div className="md:hidden flex items-center justify-between p-4 border-b bg-background">
       <div className="flex items-center gap-2">
         <div className="w-6 h-6 rounded bg-primary flex items-center justify-center">
           <Shield className="w-3 h-3 text-white" />
         </div>
-        <span className="font-bold text-sm">Админ-панель</span>
+        <span className="font-bold text-sm">{t("admin.title")}</span>
       </div>
       <div className="flex gap-1">
         {adminNavItems.map((item) => (
@@ -108,7 +113,7 @@ function MobileAdminHeader() {
             className="flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-muted-foreground"
           >
             <item.icon className="w-4 h-4" />
-            <span className="text-[8px] font-medium">{item.label}</span>
+            <span className="text-[8px] font-medium">{t(item.labelKey)}</span>
           </button>
         ))}
       </div>
