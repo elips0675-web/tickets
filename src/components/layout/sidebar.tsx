@@ -1,9 +1,10 @@
 import { NavLink } from "react-router-dom"
-import { Search, Ticket, LayoutDashboard, Users, PlusCircle, Calendar, BarChart3, FileText, MessageCircle, User, HelpCircle, LogOut, BookOpen, Newspaper, Shield, Columns3, Languages } from "lucide-react"
+import { Search, Ticket, LayoutDashboard, Users, PlusCircle, Calendar, BarChart3, FileText, MessageCircle, User, HelpCircle, LogOut, BookOpen, Newspaper, Shield, Columns3, Languages, Bell } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/context/AuthContext"
 import { useTranslation } from "react-i18next"
 import LanguageSwitcher from "@/components/LanguageSwitcher"
+import NotificationBell from "@/components/NotificationBell"
 
 const navItems = [
   { to: "/", icon: LayoutDashboard, labelKey: "nav.dashboard", roles: ["admin", "senior_agent", "agent"] },

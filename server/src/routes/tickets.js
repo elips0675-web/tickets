@@ -5,6 +5,7 @@ import { getIO } from '../socket.js'
 import { sendTicketNotification } from '../email.js'
 import { sendTelegramNotification } from '../telegram.js'
 import { logAudit } from '../audit.js'
+import { createNotification } from './notifications.js'
 
 const router = Router()
 
@@ -78,6 +79,7 @@ router.post('/', async (req, res) => {
     const [ticket] = await pool.query('SELECT * FROM tickets WHERE id = ?', [ticketId])
     getIO()?.emit('ticket:created', { ...ticket[0], messages: [] })
     logAudit({ userId: req.user.userId, userName: req.user.name, action: 'created', entityType: 'ticket', entityId: ticketId, details: { title } })
+    createNotification({ userId: req.user.userId, type: 'ticket_created', title: 'Тикет создан', body: title, link: `/tickets/${ticketId}` })
     sendTelegramNotification(`🆕 Новый тикет #${ticketId}: ${title}\nПриоритет: ${priority || 'medium'}\nКатегория: ${category || 'support'}`)
     res.status(201).json(ticket[0])
   } catch (err) {
@@ -142,6 +144,10 @@ router.put('/:id/assign', requireRole('admin', 'senior_agent'), async (req, res)
     await pool.query('UPDATE tickets SET assigned_to = ?, updated_at = NOW() WHERE id = ?', [employeeId || null, req.params.id])
     getIO()?.emit('ticket:updated', { id: Number(req.params.id), assignedTo: employeeId, updatedBy: req.user.userId })
     logAudit({ userId: req.user.userId, userName: req.user.name, action: 'assigned', entityType: 'ticket', entityId: Number(req.params.id), details: { assignedTo: employeeId || null, assignedName: emp?.name || null } })
+    if (employeeId && employeeId !== req.user.userId) {
+      const [[t]] = await pool.query('SELECT title FROM tickets WHERE id = ?', [req.params.id])
+      createNotification({ userId: employeeId, type: 'ticket_assigned', title: 'Назначен тикет', body: t?.title, link: `/tickets/${req.params.id}` })
+    }
     res.json({ success: true })
   } catch (err) {
     res.status(500).json({ message: 'Failed to assign ticket' })

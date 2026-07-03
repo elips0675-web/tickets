@@ -6,6 +6,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { Sidebar, SidebarContent } from "./sidebar"
 import { PwaInstallPrompt } from "@/components/pwa-install-prompt"
 import { cn } from "@/lib/utils"
+import NotificationBell from "@/components/NotificationBell"
 
 const bottomNavItems = [
   { to: "/", icon: LayoutDashboard, label: "Дашборд" },
@@ -51,16 +52,19 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
 function MobileHeader({ onMenuClick }: { onMenuClick: () => void }) {
   return (
-    <div className="md:hidden flex items-center justify-between p-4 border-b bg-background">
+    <div className="flex items-center justify-between p-4 border-b bg-background md:pl-6">
       <div className="flex items-center gap-2">
-        <div className="w-6 h-6 rounded bg-primary flex items-center justify-center">
+        <div className="w-6 h-6 rounded bg-primary flex items-center justify-center md:hidden">
           <span className="text-white text-[10px] font-bold">SD</span>
         </div>
         <span className="font-bold text-sm">Service Desk</span>
       </div>
-      <Button variant="ghost" size="icon" onClick={onMenuClick}>
-        <Menu className="w-5 h-5" />
-      </Button>
+      <div className="flex items-center gap-1">
+        <NotificationBell />
+        <Button variant="ghost" size="icon" onClick={onMenuClick} className="md:hidden">
+          <Menu className="w-5 h-5" />
+        </Button>
+      </div>
     </div>
   )
 }
