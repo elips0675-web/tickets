@@ -1,4 +1,5 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom"
+import { Toaster } from "sonner"
 import { AppLayout } from "@/components/layout/app-layout"
 import { AdminLayout } from "@/components/layout/admin-layout"
 import { TicketProvider } from "@/context/ticket-context"
@@ -67,6 +68,7 @@ export default function App() {
             } />
           </Routes>
         </BrowserRouter>
+        <Toaster position="top-right" richColors />
       </TicketProvider>
       </SocketProvider>
       </AuthProvider>

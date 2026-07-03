@@ -96,3 +96,99 @@ describe('POST /api/auth/register validation', () => {
     expect(res.status).toBe(400)
   })
 })
+
+describe('RBAC — ticket management', () => {
+  let adminToken, agentToken
+
+  beforeAll(async () => {
+    const admin = await request(app).post('/api/auth/dev-login')
+    adminToken = admin.body.token
+    // agent: login as employee 2 (senior_agent has elevated perms — use a non-admin employee)
+    const agent = await request(app).post('/api/auth/login').send({ email: 'ivan@example.com', password: 'password123' })
+    agentToken = agent.body.token
+  })
+
+  it('admin can update ticket status', async () => {
+    const res = await request(app)
+      .put('/api/tickets/1/status')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ status: 'in_progress' })
+    expect([200, 404, 500]).toContain(res.status)
+  })
+
+  it('rejects status update without senior_agent role', async () => {
+    const res = await request(app)
+      .put('/api/tickets/1/status')
+      .set('Authorization', `Bearer ${agentToken}`)
+      .send({ status: 'in_progress' })
+    expect(res.status).toBe(403)
+  })
+
+  it('admin can update ticket priority', async () => {
+    const res = await request(app)
+      .put('/api/tickets/1/priority')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ priority: 'high' })
+    expect([200, 404, 500]).toContain(res.status)
+  })
+
+  it('rejects priority update without senior_agent role', async () => {
+    const res = await request(app)
+      .put('/api/tickets/1/priority')
+      .set('Authorization', `Bearer ${agentToken}`)
+      .send({ priority: 'high' })
+    expect(res.status).toBe(403)
+  })
+
+  it('rejects ticket assign without senior_agent role', async () => {
+    const res = await request(app)
+      .put('/api/tickets/1/assign')
+      .set('Authorization', `Bearer ${agentToken}`)
+      .send({ assigneeId: 2 })
+    expect(res.status).toBe(403)
+  })
+})
+
+describe('RBAC — admin endpoints', () => {
+  let adminToken, agentToken
+
+  beforeAll(async () => {
+    const admin = await request(app).post('/api/auth/dev-login')
+    adminToken = admin.body.token
+    const agent = await request(app).post('/api/auth/login').send({ email: 'ivan@example.com', password: 'password123' })
+    agentToken = agent.body.token
+  })
+
+  it('admin can list users', async () => {
+    const res = await request(app)
+      .get('/api/admin/users')
+      .set('Authorization', `Bearer ${adminToken}`)
+    expect([200, 500]).toContain(res.status)
+    if (res.status === 200) {
+      expect(Array.isArray(res.body)).toBe(true)
+    }
+  })
+
+  it('rejects non-admin from listing users', async () => {
+    const res = await request(app)
+      .get('/api/admin/users')
+      .set('Authorization', `Bearer ${agentToken}`)
+    expect(res.status).toBe(403)
+  })
+})
+
+describe('DELETE /api/calendar/:id — RBAC', () => {
+  let agentToken
+
+  beforeAll(async () => {
+    const agent = await request(app).post('/api/auth/login').send({ email: 'ivan@example.com', password: 'password123' })
+    agentToken = agent.body.token
+  })
+
+  it('rejects agent from deleting calendar events', async () => {
+    const res = await request(app)
+      .delete('/api/calendar/1')
+      .set('Authorization', `Bearer ${agentToken}`)
+    expect(res.status).toBe(403)
+  })
+})

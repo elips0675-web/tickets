@@ -1,9 +1,10 @@
-import { createContext, useContext, useEffect, useState, useRef, type ReactNode } from "react"
+import { createContext, useContext, useEffect, useState, useRef, useCallback, type ReactNode } from "react"
 import { io, type Socket } from "socket.io-client"
 import { useAuth } from "./AuthContext"
 
 interface SocketContextType {
   socket: Socket | null
+  connected: boolean
   sendMessage: (chatId: number, text: string) => void
   deleteMessage: (chatId: number, msgId: number) => void
   joinChat: (chatId: number) => void
@@ -15,37 +16,40 @@ const SocketContext = createContext<SocketContextType | null>(null)
 
 export function SocketProvider({ children }: { children: ReactNode }) {
   const { token } = useAuth()
-  const socketRef = useRef<Socket | null>(null)
+  const [socket, setSocket] = useState<Socket | null>(null)
+  const [connected, setConnected] = useState(false)
 
   useEffect(() => {
     if (!token) return
     const s = io({ auth: { token } })
-    socketRef.current = s
-    return () => { s.close(); socketRef.current = null }
+    s.on("connect", () => setConnected(true))
+    s.on("disconnect", () => setConnected(false))
+    setSocket(s)
+    return () => { s.close(); setSocket(null); setConnected(false) }
   }, [token])
 
-  const sendMessage = (chatId: number, text: string) => {
-    socketRef.current?.emit("message:send", { chatId, text })
-  }
+  const sendMessage = useCallback((chatId: number, text: string) => {
+    socket?.emit("message:send", { chatId, text })
+  }, [socket])
 
-  const deleteMessage = (chatId: number, msgId: number) => {
-    socketRef.current?.emit("message:delete", { chatId, msgId })
-  }
+  const deleteMessage = useCallback((chatId: number, msgId: number) => {
+    socket?.emit("message:delete", { chatId, msgId })
+  }, [socket])
 
-  const joinChat = (chatId: number) => {
-    socketRef.current?.emit("join:chat", chatId)
-  }
+  const joinChat = useCallback((chatId: number) => {
+    socket?.emit("join:chat", chatId)
+  }, [socket])
 
-  const leaveChat = (chatId: number) => {
-    socketRef.current?.emit("leave:chat", chatId)
-  }
+  const leaveChat = useCallback((chatId: number) => {
+    socket?.emit("leave:chat", chatId)
+  }, [socket])
 
-  const notifyAll = (data: { title: string; body: string; url?: string }) => {
-    socketRef.current?.emit("notify:all", data)
-  }
+  const notifyAll = useCallback((data: { title: string; body: string; url?: string }) => {
+    socket?.emit("notify:all", data)
+  }, [socket])
 
   return (
-    <SocketContext.Provider value={{ socket: socketRef.current, sendMessage, deleteMessage, joinChat, leaveChat, notifyAll }}>
+    <SocketContext.Provider value={{ socket, connected, sendMessage, deleteMessage, joinChat, leaveChat, notifyAll }}>
       {children}
     </SocketContext.Provider>
   )

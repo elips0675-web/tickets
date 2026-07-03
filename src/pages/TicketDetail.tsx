@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
+import { toast } from "sonner"
+import { useSocket } from "@/context/SocketContext"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -19,6 +21,7 @@ export default function TicketDetail() {
   const navigate = useNavigate()
   const { tickets, employees, updateTicketStatus, updateTicketPriority, assignTicket, addMessage } = useTickets()
   const { canManage } = useAuth()
+  const { socket } = useSocket()
   const ticket = tickets.find(t => t.id === Number(id))
 
   const [messageText, setMessageText] = useState("")
@@ -26,6 +29,17 @@ export default function TicketDetail() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }) }, [ticket?.messages])
+
+  useEffect(() => {
+    if (!socket || !ticket) return
+    const onMessage = (data: { ticketId: number; message: any }) => {
+      if (data.ticketId === ticket.id) {
+        toast.info(`Новое сообщение от ${data.message.senderName}`)
+      }
+    }
+    socket.on("ticket:message", onMessage)
+    return () => { socket.off("ticket:message", onMessage) }
+  }, [socket, ticket])
 
   if (!ticket) {
     return (

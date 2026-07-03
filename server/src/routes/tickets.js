@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import pool from '../db.js'
 import { authenticateToken, requireRole } from '../middleware.js'
+import { getIO } from '../socket.js'
 
 const router = Router()
 
@@ -72,6 +73,7 @@ router.post('/', async (req, res) => {
       [ticketId, req.user.userId, req.user.name || 'User', description],
     )
     const [ticket] = await pool.query('SELECT * FROM tickets WHERE id = ?', [ticketId])
+    getIO()?.emit('ticket:created', { ...ticket[0], messages: [] })
     res.status(201).json(ticket[0])
   } catch (err) {
     console.error('Create ticket error:', err)
@@ -86,6 +88,7 @@ router.put('/:id/status', requireRole('admin', 'senior_agent'), async (req, res)
   if (!allowed.includes(status)) return res.status(400).json({ message: 'Invalid status' })
   try {
     await pool.query('UPDATE tickets SET status = ?, updated_at = NOW() WHERE id = ?', [status, req.params.id])
+    getIO()?.emit('ticket:updated', { id: Number(req.params.id), status, updatedBy: req.user.userId })
     res.json({ success: true })
   } catch (err) {
     res.status(500).json({ message: 'Failed to update status' })
@@ -99,6 +102,7 @@ router.put('/:id/priority', requireRole('admin', 'senior_agent'), async (req, re
   if (!allowed.includes(priority)) return res.status(400).json({ message: 'Invalid priority' })
   try {
     await pool.query('UPDATE tickets SET priority = ?, updated_at = NOW() WHERE id = ?', [priority, req.params.id])
+    getIO()?.emit('ticket:updated', { id: Number(req.params.id), priority, updatedBy: req.user.userId })
     res.json({ success: true })
   } catch (err) {
     res.status(500).json({ message: 'Failed to update priority' })
@@ -110,6 +114,7 @@ router.put('/:id/assign', requireRole('admin', 'senior_agent'), async (req, res)
   const { employeeId } = req.body
   try {
     await pool.query('UPDATE tickets SET assigned_to = ?, updated_at = NOW() WHERE id = ?', [employeeId, req.params.id])
+    getIO()?.emit('ticket:updated', { id: Number(req.params.id), assignedTo: employeeId, updatedBy: req.user.userId })
     res.json({ success: true })
   } catch (err) {
     res.status(500).json({ message: 'Failed to assign ticket' })
@@ -127,6 +132,7 @@ router.post('/:id/messages', async (req, res) => {
     )
     const [msg] = await pool.query('SELECT * FROM ticket_messages WHERE id = ?', [result.insertId])
     await pool.query('UPDATE tickets SET updated_at = NOW() WHERE id = ?', [req.params.id])
+    getIO()?.emit('ticket:message', { ticketId: Number(req.params.id), message: msg[0] })
     res.status(201).json(msg[0])
   } catch (err) {
     res.status(500).json({ message: 'Failed to add message' })
@@ -142,6 +148,7 @@ router.delete('/:id/messages/:msgId', async (req, res) => {
     const isOwner = msg.sender_id === req.user.userId
     if (!isAdmin && !isOwner) return res.status(403).json({ message: 'Forbidden' })
     await pool.query('DELETE FROM ticket_messages WHERE id = ?', [req.params.msgId])
+    getIO()?.emit('ticket:message-removed', { ticketId: Number(req.params.id), msgId: Number(req.params.msgId) })
     res.json({ success: true })
   } catch (err) {
     console.error('Delete message error:', err)

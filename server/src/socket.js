@@ -4,8 +4,10 @@ import pool from './db.js'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production'
 
+let io
+
 export function setupSocket(server) {
-  const io = new Server(server, {
+  io = new Server(server, {
     cors: { origin: process.env.CORS_ORIGIN || '*', methods: ['GET', 'POST'] },
   })
 
@@ -76,4 +78,8 @@ export function setupSocket(server) {
   })
 
   return io
+}
+
+export function getIO() {
+  return io || null
 }

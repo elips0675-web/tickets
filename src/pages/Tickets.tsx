@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Search, ArrowUpDown, Filter, Plus, MessageSquare, User, Download } from "lucide-react"
+import { toast } from "sonner"
+import { useSocket } from "@/context/SocketContext"
 import { useTickets } from "@/context/ticket-context"
 import { formatRelativeTime } from "@/lib/utils"
 import type { TicketStatus, TicketPriority } from "@/types"
@@ -21,6 +23,23 @@ const PER_PAGE = 9
 
 export default function Tickets() {
   const { tickets } = useTickets()
+  const { socket } = useSocket()
+
+  useEffect(() => {
+    if (!socket) return
+    const onCreated = (ticket: any) => {
+      toast.success("Новый тикет", { description: ticket.title })
+    }
+    const onUpdated = (data: any) => {
+      toast.info("Тикет обновлён", { description: `#${data.id}` })
+    }
+    socket.on("ticket:created", onCreated)
+    socket.on("ticket:updated", onUpdated)
+    return () => {
+      socket.off("ticket:created", onCreated)
+      socket.off("ticket:updated", onUpdated)
+    }
+  }, [socket])
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [search, setSearch] = useState("")
