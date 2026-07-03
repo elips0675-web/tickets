@@ -42,7 +42,13 @@ export default function ProfilePage() {
 
   useEffect(() => {
     const saved = localStorage.getItem("sysInfo")
-    if (saved) setSysInfo(JSON.parse(saved))
+    if (saved) { setSysInfo(JSON.parse(saved)); return }
+    fetch("/api/system-info").then(r => r.ok && r.json()).then(data => {
+      if (data) {
+        setSysInfo({ computerName: data.computerName, userAccount: data.userAccount })
+        localStorage.setItem("sysInfo", JSON.stringify({ computerName: data.computerName, userAccount: data.userAccount }))
+      }
+    }).catch(() => {})
   }, [])
 
   const copyScript = () => {

@@ -4,6 +4,7 @@ import { createServer } from 'http'
 import cors from 'cors'
 import helmet from 'helmet'
 import rateLimit from 'express-rate-limit'
+import os from 'os'
 import ticketsRouter from './routes/tickets.js'
 import employeesRouter from './routes/employees.js'
 import calendarRouter from './routes/calendar.js'
@@ -47,6 +48,15 @@ app.get('/', (req, res) => {
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })
+})
+
+app.get('/api/system-info', (req, res) => {
+  res.json({
+    computerName: os.hostname(),
+    userAccount: `${process.env.USERDOMAIN || os.hostname()}\\${process.env.USERNAME || ''}`,
+    userName: process.env.USERNAME || '',
+    domain: process.env.USERDOMAIN || '',
+  })
 })
 
 app.use((err, req, res, next) => {
