@@ -4,6 +4,7 @@ import { LayoutDashboard, Ticket, MessageCircle, Users, Menu, MoreHorizontal } f
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { Sidebar, SidebarContent } from "./sidebar"
+import { PwaInstallPrompt } from "@/components/pwa-install-prompt"
 import { cn } from "@/lib/utils"
 
 const bottomNavItems = [
@@ -38,6 +39,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         </main>
         <MobileBottomNav onMenuClick={() => setMenuOpen(true)} />
       </div>
+      <PwaInstallPrompt />
       <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
         <SheetContent side="left" className="p-0 w-60 flex flex-col bg-sidebar text-sidebar-foreground">
           <SidebarContent onNavigate={() => setMenuOpen(false)} />
