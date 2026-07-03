@@ -21,6 +21,7 @@ import NewsPage from "@/pages/News"
 import KanbanPage from "@/pages/Kanban"
 import Login from "@/pages/Login"
 import Register from "@/pages/Register"
+import Admin from "@/pages/Admin"
 import NotFound from "@/pages/NotFound"
 
 export default function App() {
@@ -50,6 +51,7 @@ export default function App() {
                   <Route path="/search" element={<SearchPage />} />
                   <Route path="/wiki" element={<WikiPage />} />
                   <Route path="/news" element={<NewsPage />} />
+                  <Route path="/admin" element={<Admin />} />
                   <Route path="/kanban" element={<KanbanPage />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>

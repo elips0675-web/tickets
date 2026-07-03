@@ -39,6 +39,10 @@ app.use('/api/news', newsRouter)
 app.use('/api/push', pushRouter)
 app.use('/api/search', searchRouter)
 
+app.get('/', (req, res) => {
+  res.json({ app: 'Service Desk API', version: '1.0.0' })
+})
+
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })
 })
