@@ -80,7 +80,7 @@ router.post('/', async (req, res) => {
 })
 
 // PUT /api/tickets/:id/status
-router.put('/:id/status', async (req, res) => {
+router.put('/:id/status', requireRole('admin', 'senior_agent'), async (req, res) => {
   const { status } = req.body
   const allowed = ['open', 'in_progress', 'resolved', 'closed']
   if (!allowed.includes(status)) return res.status(400).json({ message: 'Invalid status' })
@@ -93,7 +93,7 @@ router.put('/:id/status', async (req, res) => {
 })
 
 // PUT /api/tickets/:id/priority
-router.put('/:id/priority', async (req, res) => {
+router.put('/:id/priority', requireRole('admin', 'senior_agent'), async (req, res) => {
   const { priority } = req.body
   const allowed = ['low', 'medium', 'high', 'critical']
   if (!allowed.includes(priority)) return res.status(400).json({ message: 'Invalid priority' })

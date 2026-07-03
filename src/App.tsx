@@ -1,5 +1,6 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom"
 import { AppLayout } from "@/components/layout/app-layout"
+import { AdminLayout } from "@/components/layout/admin-layout"
 import { TicketProvider } from "@/context/ticket-context"
 import { AuthProvider } from "@/context/AuthContext"
 import { SocketProvider } from "@/context/SocketContext"
@@ -22,6 +23,8 @@ import KanbanPage from "@/pages/Kanban"
 import Login from "@/pages/Login"
 import Register from "@/pages/Register"
 import Admin from "@/pages/Admin"
+import AdminUsers from "@/pages/AdminUsers"
+import AdminPush from "@/pages/AdminPush"
 import NotFound from "@/pages/NotFound"
 
 export default function App() {
@@ -34,6 +37,9 @@ export default function App() {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/admin" element={<AdminLayout><Admin /></AdminLayout>} />
+            <Route path="/admin/users" element={<AdminLayout><AdminUsers /></AdminLayout>} />
+            <Route path="/admin/push" element={<AdminLayout><AdminPush /></AdminLayout>} />
             <Route path="/*" element={
               <AppLayout>
                 <Routes>
@@ -51,7 +57,6 @@ export default function App() {
                   <Route path="/search" element={<SearchPage />} />
                   <Route path="/wiki" element={<WikiPage />} />
                   <Route path="/news" element={<NewsPage />} />
-                  <Route path="/admin" element={<Admin />} />
                   <Route path="/kanban" element={<KanbanPage />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>

@@ -2,7 +2,7 @@ import { Router } from 'express'
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
 import pool from '../db.js'
-import { JWT_SECRET } from '../middleware.js'
+import { JWT_SECRET, authenticateToken, requireRole } from '../middleware.js'
 
 const router = Router()
 
@@ -40,7 +40,7 @@ router.post('/login', async (req, res) => {
   }
 })
 
-router.post('/register', async (req, res) => {
+router.post('/register', authenticateToken, requireRole('admin'), async (req, res) => {
   const { name, email, password, department, title } = req.body
   if (!name || !email || !password) {
     return res.status(400).json({ error: 'Имя, email и пароль обязательны' })

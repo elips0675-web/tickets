@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import pool from '../db.js'
-import { authenticateToken } from '../middleware.js'
+import { authenticateToken, requireRole } from '../middleware.js'
 
 const router = Router()
 router.use(authenticateToken)
@@ -42,7 +42,7 @@ router.post('/', async (req, res) => {
   }
 })
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireRole('admin', 'senior_agent'), async (req, res) => {
   try {
     await pool.query('DELETE FROM events WHERE id = ?', [req.params.id])
     res.json({ ok: true })

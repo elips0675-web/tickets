@@ -3,12 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Shield, Users, Ticket, BarChart3, Activity, UserCog, ShieldCheck, RefreshCw, Send, Bell } from "lucide-react"
-import { useAuth } from "@/context/AuthContext"
+import { Shield, Users, Ticket, Activity, UserCog, ShieldCheck, RefreshCw } from "lucide-react"
 import { useNavigate } from "react-router-dom"
-import { usePush } from "@/lib/use-push"
 
 interface Employee {
   id: number
@@ -19,6 +15,7 @@ interface Employee {
   online: boolean
   activeTickets: number
   resolvedToday: number
+  isActive: boolean
 }
 
 interface Stats {
@@ -30,24 +27,17 @@ interface Stats {
 }
 
 export default function Admin() {
-  const { user } = useAuth()
   const navigate = useNavigate()
   const [employees, setEmployees] = useState<Employee[]>([])
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
-  const { subscribed, supported, loading: pushLoading, subscribe, unsubscribe } = usePush()
-  const [pushTitle, setPushTitle] = useState("")
-  const [pushBody, setPushBody] = useState("")
-  const [pushUrl, setPushUrl] = useState("/")
-  const [sending, setSending] = useState(false)
-  const [sendResult, setSendResult] = useState<{ sent: number; failed: number; total: number } | null>(null)
 
   const fetchData = async () => {
     setLoading(true)
     const token = localStorage.getItem("token")
     try {
       const [empRes, statsRes] = await Promise.all([
-        fetch("/api/employees", { headers: { Authorization: `Bearer ${token}` } }),
+        fetch("/api/admin/users", { headers: { Authorization: `Bearer ${token}` } }),
         fetch("/api/employees/stats", { headers: { Authorization: `Bearer ${token}` } }),
       ])
       if (empRes.ok) setEmployees(await empRes.json())
@@ -60,45 +50,6 @@ export default function Admin() {
 
   useEffect(() => { fetchData() }, [])
 
-  const handleSendPush = async () => {
-    if (!pushTitle.trim()) return
-    setSending(true)
-    setSendResult(null)
-    try {
-      const token = localStorage.getItem("token")
-      const res = await fetch("/api/push/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ title: pushTitle, body: pushBody, url: pushUrl }),
-      })
-      if (res.ok) {
-        const result = await res.json()
-        setSendResult(result)
-        if (result.sent > 0) {
-          setPushTitle("")
-          setPushBody("")
-          setPushUrl("/")
-        }
-      }
-    } catch (err) {
-      console.error("Send push error:", err)
-    }
-    setSending(false)
-  }
-
-  if (user?.role !== "admin") {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <Shield className="w-16 h-16 text-muted-foreground/40" />
-        <div className="text-center">
-          <h2 className="text-xl font-bold">Нет доступа</h2>
-          <p className="text-sm text-muted-foreground mt-1">Только администратор может просматривать эту страницу</p>
-        </div>
-        <Button variant="outline" onClick={() => navigate("/")}>На главную</Button>
-      </div>
-    )
-  }
-
   const roleBadge = (role: string) => {
     const map: Record<string, { label: string; variant: "default" | "secondary" | "outline" }> = {
       admin: { label: "Админ", variant: "default" },
@@ -109,12 +60,14 @@ export default function Admin() {
     return <Badge variant={c.variant} className="text-[10px]">{c.label}</Badge>
   }
 
+  const activeEmployees = employees.filter(e => e.isActive)
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Администрирование</h1>
-          <p className="text-sm text-muted-foreground mt-1">Управление системой и пользователями</p>
+          <h1 className="text-2xl font-bold tracking-tight">Дашборд</h1>
+          <p className="text-sm text-muted-foreground mt-1">Общая статистика системы</p>
         </div>
         <Button variant="outline" size="sm" onClick={fetchData} disabled={loading}>
           <RefreshCw className={`w-4 h-4 mr-1.5 ${loading ? "animate-spin" : ""}`} />
@@ -130,7 +83,7 @@ export default function Admin() {
                 <Users className="w-5 h-5 text-blue-600" />
               </div>
             </div>
-            <div className="text-2xl font-bold">{employees.length}</div>
+            <div className="text-2xl font-bold">{activeEmployees.length}</div>
             <p className="text-xs text-muted-foreground font-medium mt-1">Сотрудников</p>
           </CardContent>
         </Card>
@@ -141,7 +94,7 @@ export default function Admin() {
                 <ShieldCheck className="w-5 h-5 text-green-600" />
               </div>
             </div>
-            <div className="text-2xl font-bold">{employees.filter(e => e.online).length}</div>
+            <div className="text-2xl font-bold">{activeEmployees.filter(e => e.online).length}</div>
             <p className="text-xs text-muted-foreground font-medium mt-1">Онлайн</p>
           </CardContent>
         </Card>
@@ -170,15 +123,18 @@ export default function Admin() {
       </div>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-sm flex items-center gap-2">
             <UserCog className="w-4 h-4 text-primary" />
             Сотрудники
           </CardTitle>
+          <Button variant="outline" size="sm" onClick={() => navigate("/admin/users")}>
+            Управление
+          </Button>
         </CardHeader>
         <CardContent className="p-0">
           <div className="divide-y">
-            {employees.map(emp => (
+            {activeEmployees.slice(0, 8).map(emp => (
               <div key={emp.id} className="flex items-center gap-4 px-5 py-3.5 hover:bg-muted/30 transition-colors">
                 <Avatar className="w-9 h-9">
                   <AvatarFallback className="text-xs bg-primary/10 text-primary">
@@ -207,7 +163,7 @@ export default function Admin() {
       <Card>
         <CardHeader>
           <CardTitle className="text-sm flex items-center gap-2">
-            <BarChart3 className="w-4 h-4 text-primary" />
+            <Shield className="w-4 h-4 text-primary" />
             Статистика по ролям
           </CardTitle>
         </CardHeader>
@@ -231,75 +187,6 @@ export default function Admin() {
                 </div>
               )
             })}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm flex items-center gap-2">
-            <Bell className="w-4 h-4 text-primary" />
-            Рассылка push-уведомлений
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {supported && (
-            <div className="flex items-center justify-between rounded-lg bg-muted/30 p-3">
-              <div className="flex items-center gap-2 text-sm">
-                <Bell className="w-4 h-4 text-muted-foreground" />
-                <span>{subscribed ? "Уведомления включены" : "Уведомления выключены"}</span>
-              </div>
-              <Button
-                variant={subscribed ? "outline" : "default"}
-                size="sm"
-                onClick={subscribed ? unsubscribe : subscribe}
-                disabled={pushLoading}
-              >
-                {subscribed ? "Отключить" : "Включить"}
-              </Button>
-            </div>
-          )}
-          {!supported && (
-            <p className="text-sm text-muted-foreground">Push-уведомления не поддерживаются вашим браузером</p>
-          )}
-
-          <div className="space-y-3">
-            <div>
-              <label className="text-sm font-medium mb-1 block">Заголовок *</label>
-              <Input
-                placeholder="Например: Важное обновление"
-                value={pushTitle}
-                onChange={e => setPushTitle(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-1 block">Текст</label>
-              <Textarea
-                placeholder="Текст уведомления..."
-                value={pushBody}
-                onChange={e => setPushBody(e.target.value)}
-                rows={3}
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-1 block">Ссылка</label>
-              <Input
-                placeholder="/"
-                value={pushUrl}
-                onChange={e => setPushUrl(e.target.value)}
-              />
-            </div>
-            <div className="flex items-center gap-3 pt-1">
-              <Button onClick={handleSendPush} disabled={sending || !pushTitle.trim()}>
-                <Send className="w-4 h-4 mr-1.5" />
-                {sending ? "Отправка..." : "Отправить"}
-              </Button>
-              {sendResult && (
-                <span className="text-sm text-muted-foreground">
-                  Отправлено: {sendResult.sent}, ошибок: {sendResult.failed}
-                </span>
-              )}
-            </div>
           </div>
         </CardContent>
       </Card>

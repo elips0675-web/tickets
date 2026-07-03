@@ -15,6 +15,7 @@ import newsRouter from './routes/news.js'
 import searchRouter from './routes/search.js'
 import pushRouter from './routes/push.js'
 import authRouter from './routes/auth.js'
+import adminRouter from './routes/admin.js'
 import knex from 'knex'
 import knexConfig from '../knexfile.js'
 
@@ -38,6 +39,7 @@ app.use('/api/wiki', wikiRouter)
 app.use('/api/news', newsRouter)
 app.use('/api/push', pushRouter)
 app.use('/api/search', searchRouter)
+app.use('/api/admin', adminRouter)
 
 app.get('/', (req, res) => {
   res.json({ app: 'Service Desk API', version: '1.0.0' })
