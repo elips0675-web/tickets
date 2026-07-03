@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { useTickets } from "@/context/ticket-context"
+import { useAuth } from "@/context/AuthContext"
 import { formatDate, formatTime } from "@/lib/utils"
 import { ArrowLeft, Send, User, MessageSquare, Tag, Lock, ExternalLink, Monitor } from "lucide-react"
 import type { TicketStatus, TicketPriority } from "@/types"
@@ -17,6 +18,7 @@ export default function TicketDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { tickets, employees, updateTicketStatus, updateTicketPriority, assignTicket, addMessage } = useTickets()
+  const { canManage } = useAuth()
   const ticket = tickets.find(t => t.id === Number(id))
 
   const [messageText, setMessageText] = useState("")
@@ -141,6 +143,7 @@ export default function TicketDetail() {
         </div>
 
         <div className="space-y-4">
+          {canManage && (
           <Card>
             <CardHeader>
               <CardTitle className="text-sm">Управление</CardTitle>
@@ -202,6 +205,7 @@ export default function TicketDetail() {
               </div>
             </CardContent>
           </Card>
+          )}
 
           <Card>
             <CardHeader>

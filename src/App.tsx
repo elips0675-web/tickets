@@ -26,6 +26,7 @@ import Admin from "@/pages/Admin"
 import AdminUsers from "@/pages/AdminUsers"
 import AdminPush from "@/pages/AdminPush"
 import NotFound from "@/pages/NotFound"
+import ProtectedRoute from "@/components/ProtectedRoute"
 
 export default function App() {
   return (
@@ -36,12 +37,13 @@ export default function App() {
         <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <Routes>
             <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/admin" element={<AdminLayout><Admin /></AdminLayout>} />
-            <Route path="/admin/users" element={<AdminLayout><AdminUsers /></AdminLayout>} />
-            <Route path="/admin/push" element={<AdminLayout><AdminPush /></AdminLayout>} />
+            <Route path="/register" element={<ProtectedRoute adminOnly><Register /></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute adminOnly><AdminLayout><Admin /></AdminLayout></ProtectedRoute>} />
+            <Route path="/admin/users" element={<ProtectedRoute adminOnly><AdminLayout><AdminUsers /></AdminLayout></ProtectedRoute>} />
+            <Route path="/admin/push" element={<ProtectedRoute adminOnly><AdminLayout><AdminPush /></AdminLayout></ProtectedRoute>} />
             <Route path="/*" element={
               <AppLayout>
+                <ProtectedRoute>
                 <Routes>
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/tickets" element={<Tickets />} />
@@ -60,6 +62,7 @@ export default function App() {
                   <Route path="/kanban" element={<KanbanPage />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
+                </ProtectedRoute>
               </AppLayout>
             } />
           </Routes>

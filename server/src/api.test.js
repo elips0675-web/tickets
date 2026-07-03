@@ -79,8 +79,20 @@ describe('GET /api/search', () => {
 })
 
 describe('POST /api/auth/register validation', () => {
-  it('fails without body', async () => {
+  let adminToken
+
+  beforeAll(async () => {
+    const login = await request(app).post('/api/auth/dev-login')
+    adminToken = login.body.token
+  })
+
+  it('rejects without auth', async () => {
     const res = await request(app).post('/api/auth/register').send({})
+    expect(res.status).toBe(401)
+  })
+
+  it('fails without body', async () => {
+    const res = await request(app).post('/api/auth/register').set('Authorization', `Bearer ${adminToken}`).send({})
     expect(res.status).toBe(400)
   })
 })

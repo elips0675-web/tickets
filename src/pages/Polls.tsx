@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Checkbox } from "@/components/ui/checkbox"
 import { Plus, BarChart3, CheckCheck, X } from "lucide-react"
 import type { Poll, PollOption } from "@/types"
+import { useAuth } from "@/context/AuthContext"
 
 const DEMO_POLLS: Poll[] = [
   {
@@ -31,6 +32,7 @@ const DEMO_POLLS: Poll[] = [
 ]
 
 export default function PollsPage() {
+  const { canManage } = useAuth()
   const [polls, setPolls] = useState<Poll[]>(DEMO_POLLS)
   const [showNew, setShowNew] = useState(false)
   const [voting, setVoting] = useState<number | null>(null)
@@ -83,9 +85,11 @@ export default function PollsPage() {
           <h1 className="text-2xl font-bold tracking-tight">Опросы</h1>
           <p className="text-sm text-muted-foreground mt-1">Голосование и сбор мнений</p>
         </div>
+        {canManage && (
         <Button onClick={() => setShowNew(!showNew)}>
           <Plus className="w-4 h-4 mr-1.5" /> Создать опрос
         </Button>
+        )}
       </div>
 
       {showNew && (

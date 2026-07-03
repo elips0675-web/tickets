@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { ChevronLeft, ChevronRight, Plus, Bell, Clock, Trash2 } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 import type { CalendarEvent } from "@/types"
+import { useAuth } from "@/context/AuthContext"
 
 const MONTHS_RU = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"]
 
@@ -21,6 +22,7 @@ const DEMO_EVENTS: CalendarEvent[] = [
 ]
 
 export default function CalendarPage() {
+  const { canManage } = useAuth()
   const [date, setDate] = useState(new Date())
   const [events, setEvents] = useState<CalendarEvent[]>(DEMO_EVENTS)
   const [selDay, setSelDay] = useState<number | null>(null)
@@ -164,6 +166,7 @@ export default function CalendarPage() {
                         <p className="text-xs text-muted-foreground mt-0.5">{e.description}</p>
                       )}
                     </div>
+                    {canManage && (
                     <Button
                       variant="ghost"
                       size="icon"
@@ -172,6 +175,7 @@ export default function CalendarPage() {
                     >
                       <Trash2 className="w-3 h-3 text-destructive" />
                     </Button>
+                    )}
                   </div>
                 </div>
               ))}
