@@ -1,15 +1,14 @@
-import { useState, useMemo } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Search, Grid3X3, List, FileText, Image, FileCode, File, Folder } from "lucide-react"
+import { Search, Grid3X3, List, FileText, Image, FileCode, File, Folder, Loader2 } from "lucide-react"
 import type { FileItem, FileFolder } from "@/types"
+import { useAuth } from "@/context/AuthContext"
 
-const FILE_ICONS: Record<string, string> = {
-  img: "🖼️", pdf: "📄", doc: "📝", code: "💻", archive: "🗜️",
-}
+const API = "http://localhost:4000/api"
 
 const CATEGORIES = [
   { key: "all", label: "Все", icon: Folder },
@@ -19,40 +18,37 @@ const CATEGORIES = [
   { key: "code", label: "Код", icon: FileCode },
 ]
 
-const DEMO_FOLDERS: FileFolder[] = [
-  {
-    id: 1, name: "Документы", files: [
-      { id: 1, name: "Отчёт Q2.pdf", size: "2.4 MB", type: "pdf", folderId: 1, createdAt: "2026-06-29" },
-      { id: 2, name: "Договор поставки.docx", size: "845 KB", type: "doc", folderId: 1, createdAt: "2026-06-28" },
-      { id: 3, name: "Презентация.pptx", size: "5.1 MB", type: "doc", folderId: 1, createdAt: "2026-06-25" },
-    ],
-  },
-  {
-    id: 2, name: "Дизайн", files: [
-      { id: 4, name: "Макет главной.png", size: "1.8 MB", type: "img", folderId: 2, createdAt: "2026-06-28" },
-      { id: 5, name: "Логотип.svg", size: "124 KB", type: "code", folderId: 2, createdAt: "2026-06-27" },
-      { id: 6, name: "Баннер.jpg", size: "3.2 MB", type: "img", folderId: 2, createdAt: "2026-06-26" },
-    ],
-  },
-  {
-    id: 3, name: "Архив", files: [
-      { id: 7, name: "Старая документация.pdf", size: "1.1 MB", type: "pdf", folderId: 3, createdAt: "2026-05-15" },
-    ],
-  },
-  {
-    id: 4, name: "Скрипты", files: [
-      { id: 8, name: "deploy.sh", size: "2 KB", type: "code", folderId: 4, createdAt: "2026-06-30" },
-      { id: 9, name: "backup.py", size: "15 KB", type: "code", folderId: 4, createdAt: "2026-06-29" },
-    ],
-  },
-]
-
 export default function FilesPage() {
-  const [folders] = useState<FileFolder[]>(DEMO_FOLDERS)
-  const [activeFolder, setActiveFolder] = useState<number>(1)
+  const { token } = useAuth()
+  const [folders, setFolders] = useState<FileFolder[]>([])
+  const [loading, setLoading] = useState(true)
+  const [activeFolder, setActiveFolder] = useState<number | null>(null)
   const [category, setCategory] = useState("all")
   const [search, setSearch] = useState("")
   const [view, setView] = useState<"grid" | "list">("grid")
+
+  useEffect(() => {
+    fetch(`${API}/files/folders`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => res.ok ? res.json() : [])
+      .then(data => {
+        const mapped = data.map((f: any) => ({
+          id: f.id,
+          name: f.name,
+          files: (f.files || []).map((file: any) => ({
+            id: file.id,
+            name: file.name,
+            size: file.size,
+            type: file.type,
+            folderId: file.folderId,
+            createdAt: file.createdAt,
+          })),
+        }))
+        setFolders(mapped)
+        if (mapped.length > 0 && activeFolder === null) setActiveFolder(mapped[0].id)
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  }, [token])
 
   const currentFolder = folders.find(f => f.id === activeFolder)
   const allFiles = useMemo(() => folders.flatMap(f => f.files.map(file => ({ ...file, folder: f.name }))), [folders])
@@ -64,8 +60,6 @@ export default function FilesPage() {
       .filter(f => !search || f.name.toLowerCase().includes(search.toLowerCase()))
   }, [search, allFiles, currentFolder, category])
 
-  const iconForType = (type: string) => FILE_ICONS[type] || "📁"
-
   return (
     <div className="space-y-6">
       <div>
@@ -73,6 +67,12 @@ export default function FilesPage() {
         <p className="text-sm text-muted-foreground mt-1">Управление файлами и документами</p>
       </div>
 
+      {loading ? (
+        <div className="flex justify-center py-16">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : (
+      <>
       <div className="flex flex-wrap gap-2">
         {folders.map(f => (
           <button
@@ -97,7 +97,7 @@ export default function FilesPage() {
           <Input
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder={search ? "🔍 Поиск по всем файлам..." : "🔍 Поиск в папке..."}
+            placeholder={search ? "Поиск по всем файлам..." : "Поиск в папке..."}
             className="pl-9"
           />
         </div>
@@ -128,7 +128,9 @@ export default function FilesPage() {
           {displayFiles.map(f => (
             <Card key={f.id} className="hover:shadow-md transition-all hover:-translate-y-0.5 cursor-pointer">
               <CardContent className="p-5 text-center">
-                <div className="text-4xl mb-3">{iconForType(f.type)}</div>
+                <div className="text-4xl mb-3">
+                  {{ img: "🖼️", pdf: "📄", doc: "📝", code: "💻", archive: "🗜️" }[f.type] || "📁"}
+                </div>
                 <p className="text-sm font-bold truncate">{f.name}</p>
                 <p className="text-[10px] text-muted-foreground mt-1">{f.size}{f.folder ? ` • ${f.folder}` : ""}</p>
               </CardContent>
@@ -140,7 +142,7 @@ export default function FilesPage() {
           <CardContent className="p-2 divide-y">
             {displayFiles.map(f => (
               <div key={f.id} className="flex items-center gap-3 p-3 hover:bg-muted/50 rounded-lg cursor-pointer transition-colors">
-                <span className="text-2xl w-8 text-center">{iconForType(f.type)}</span>
+                <span className="text-2xl w-8 text-center">{"🖼️📄📝💻🗜️".includes(f.type) ? f.type : "📁"}</span>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold truncate">{f.name}</p>
                   <p className="text-[10px] text-muted-foreground">
@@ -151,6 +153,8 @@ export default function FilesPage() {
             ))}
           </CardContent>
         </Card>
+      )}
+      </>
       )}
     </div>
   )

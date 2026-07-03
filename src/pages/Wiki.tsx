@@ -1,26 +1,37 @@
-import { useState, useMemo } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, BookOpen, Plus, Clock, User, Tag, Layers } from "lucide-react"
+import { Search, BookOpen, Plus, Clock, User, Tag, Layers, Loader2 } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import type { WikiArticle } from "@/types"
 import { useAuth } from "@/context/AuthContext"
 
-const DEMO_ARTICLES: WikiArticle[] = [
-  { id: 1, title: "Как создать заявку", content: "Для создания заявки перейдите в раздел «Тикеты» и нажмите «Новый тикет». Заполните форму и отправьте. Статус заявки можно отслеживать в списке.", category: "Руководство", tags: ["тикеты", "создание"], authorId: 1, authorName: "Алексей Петров", createdAt: "2026-06-15T10:00:00", updatedAt: "2026-06-20T14:00:00" },
-  { id: 2, title: "Правила работы с инцидентами", content: "Критические инциденты должны быть назначены в течение 15 минут. Время реакции — не более 1 часа. Все шаги фиксировать в комментариях.", category: "Правила", tags: ["инциденты", "SLA"], authorId: 1, authorName: "Алексей Петров", createdAt: "2026-06-10T09:00:00", updatedAt: "2026-06-18T11:00:00" },
-  { id: 3, title: "Настройка email-уведомлений", content: "Перейдите в Профиль → Настройки. Включите нужные типы уведомлений. Доступны: новый тикет, ответ, смена статуса.", category: "Инструкции", tags: ["email", "уведомления"], authorId: 2, authorName: "Мария Иванова", createdAt: "2026-06-12T12:00:00", updatedAt: "2026-06-12T12:00:00" },
-  { id: 4, title: "Часто задаваемые вопросы", content: "Вопрос: Как сменить пароль? Ответ: Обратитесь к администратору. Вопрос: Где найти статистику? Ответ: На дашборде.", category: "FAQ", tags: ["вопросы", "ответы"], authorId: 3, authorName: "Дмитрий Сидоров", createdAt: "2026-06-05T08:00:00", updatedAt: "2026-06-14T16:00:00" },
-  { id: 5, title: "Интеграция с Telegram", content: "Для подключения Telegram-бота обратитесь к IT-отделу. После настройки вы сможете получать уведомления и отвечать на тикеты через Telegram.", category: "Интеграции", tags: ["telegram", "бот"], authorId: 1, authorName: "Алексей Петров", createdAt: "2026-06-01T15:00:00", updatedAt: "2026-06-22T09:00:00" },
-]
+const API = "http://localhost:4000/api"
+
+function mapArticle(raw: any): WikiArticle {
+  return {
+    id: raw.id,
+    title: raw.title,
+    content: raw.content,
+    category: raw.category,
+    tags: typeof raw.tags === "string" ? JSON.parse(raw.tags) : (raw.tags || []),
+    authorId: raw.author_id,
+    authorName: raw.author_name,
+    createdAt: raw.created_at,
+    updatedAt: raw.updated_at,
+  }
+}
 
 const CATEGORIES = ["Все", "Руководство", "Правила", "Инструкции", "FAQ", "Интеграции"]
 
 export default function WikiPage() {
+  const { canManage, token } = useAuth()
+  const [articles, setArticles] = useState<WikiArticle[]>([])
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [category, setCategory] = useState("Все")
   const [article, setArticle] = useState<WikiArticle | null>(null)
@@ -29,38 +40,48 @@ export default function WikiPage() {
   const [newContent, setNewContent] = useState("")
   const [newCategory, setNewCategory] = useState("Руководство")
   const [newTags, setNewTags] = useState("")
-  const { canManage } = useAuth()
+
+  useEffect(() => {
+    fetch(`${API}/wiki`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => res.ok ? res.json() : [])
+      .then(data => { setArticles(data.map(mapArticle)); setLoading(false) })
+      .catch(() => setLoading(false))
+  }, [token])
 
   const filtered = useMemo(() => {
-    let items = DEMO_ARTICLES
+    let items = articles
     if (category !== "Все") items = items.filter(a => a.category === category)
     if (search.trim()) {
       const q = search.toLowerCase()
       items = items.filter(a => a.title.toLowerCase().includes(q) || a.content.toLowerCase().includes(q) || a.tags.some(t => t.includes(q)))
     }
     return items
-  }, [search, category])
+  }, [articles, search, category])
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!newTitle.trim() || !newContent.trim()) return
-    const article: WikiArticle = {
-      id: DEMO_ARTICLES.length + 1,
-      title: newTitle,
-      content: newContent,
-      category: newCategory,
-      tags: newTags.split(",").map(t => t.trim()).filter(Boolean),
-      authorId: 1,
-      authorName: "Алексей Петров",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }
-    DEMO_ARTICLES.unshift(article)
+    try {
+      const res = await fetch(`${API}/wiki`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          title: newTitle,
+          content: newContent,
+          category: newCategory,
+          tags: newTags.split(",").map(t => t.trim()).filter(Boolean),
+        }),
+      })
+      if (res.ok) {
+        const created = mapArticle(await res.json())
+        setArticles(prev => [created, ...prev])
+        setArticle(created)
+      }
+    } catch { /* ignore */ }
     setOpen(false)
     setNewTitle("")
     setNewContent("")
     setNewCategory("Руководство")
     setNewTags("")
-    setArticle(article)
   }
 
   return (
@@ -116,7 +137,11 @@ export default function WikiPage() {
         </Select>
       </div>
 
-      {article ? (
+      {loading ? (
+        <div className="flex justify-center py-16">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : article ? (
         <div className="rounded-xl border bg-card p-6 space-y-4">
           <div className="flex items-start justify-between">
             <div>

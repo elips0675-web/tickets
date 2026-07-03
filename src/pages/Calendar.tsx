@@ -5,32 +5,33 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
-import { ChevronLeft, ChevronRight, Plus, Bell, Clock, Trash2 } from "lucide-react"
+import { ChevronLeft, ChevronRight, Plus, Bell, Clock, Trash2, Loader2 } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 import type { CalendarEvent } from "@/types"
 import { useAuth } from "@/context/AuthContext"
 
+const API = "http://localhost:4000/api"
 const MONTHS_RU = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"]
 
-const DEMO_EVENTS: CalendarEvent[] = [
-  { id: 1, title: "Релиз v2.1", date: "2026-07-02", time: "14:00", description: "Выпуск обновления системы", creatorId: 1, createdAt: "2026-06-30" },
-  { id: 2, title: "Митинг команды", date: "2026-07-03", time: "10:00", description: "Еженедельный митинг разработки", creatorId: 1, createdAt: "2026-06-30" },
-  { id: 3, title: "Дедлайн по задаче T-42", date: "2026-07-05", time: null, description: "Завершить интеграцию с Telegram", creatorId: 1, createdAt: "2026-06-28" },
-  { id: 4, title: "Планёрка", date: "2026-07-01", time: "11:00", description: "Обсуждение спринта", creatorId: 1, createdAt: "2026-06-25" },
-  { id: 5, title: "Обзор безопасности", date: "2026-07-10", time: "15:00", description: "Аудит безопасности системы", creatorId: 1, createdAt: "2026-06-20" },
-  { id: 6, title: "Встреча с заказчиком", date: "2026-07-02", time: "16:00", description: "Демо нового функционала", creatorId: 1, createdAt: "2026-07-01" },
-]
-
 export default function CalendarPage() {
-  const { canManage } = useAuth()
+  const { canManage, token } = useAuth()
   const [date, setDate] = useState(new Date())
-  const [events, setEvents] = useState<CalendarEvent[]>(DEMO_EVENTS)
+  const [events, setEvents] = useState<CalendarEvent[]>([])
+  const [loading, setLoading] = useState(true)
   const [selDay, setSelDay] = useState<number | null>(null)
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState({ title: "", time: "", description: "" })
 
   const year = date.getFullYear()
   const month = date.getMonth()
+
+  useEffect(() => {
+    setLoading(true)
+    fetch(`${API}/calendar?year=${year}&month=${month + 1}`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => res.ok ? res.json() : [])
+      .then(data => { setEvents(data); setLoading(false) })
+      .catch(() => setLoading(false))
+  }, [token, year, month])
 
   const firstDay = new Date(year, month, 1).getDay()
   const daysInMonth = new Date(year, month + 1, 0).getDate()
@@ -47,25 +48,29 @@ export default function CalendarPage() {
   const isToday = (day: number) =>
     today.getDate() === day && today.getMonth() === month && today.getFullYear() === year
 
-  const addEvent = () => {
+  const addEvent = async () => {
     if (!form.title.trim() || !selDay) return
     const dayStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(selDay).padStart(2, "0")}`
-    const newEvent: CalendarEvent = {
-      id: Date.now(),
-      title: form.title,
-      date: dayStr,
-      time: form.time || null,
-      description: form.description || null,
-      creatorId: 1,
-      createdAt: new Date().toISOString(),
-    }
-    setEvents(prev => [...prev, newEvent])
+    try {
+      const res = await fetch(`${API}/calendar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ title: form.title, date: dayStr, time: form.time || null, description: form.description || null }),
+      })
+      if (res.ok) {
+        const evt = await res.json()
+        setEvents(prev => [...prev, evt])
+      }
+    } catch { /* ignore */ }
     setForm({ title: "", time: "", description: "" })
     setShowAdd(false)
   }
 
-  const deleteEvent = (id: number) => {
-    setEvents(prev => prev.filter(e => e.id !== id))
+  const deleteEvent = async (id: number) => {
+    try {
+      await fetch(`${API}/calendar/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } })
+      setEvents(prev => prev.filter(e => e.id !== id))
+    } catch { /* ignore */ }
   }
 
   const prevMonth = () => setDate(new Date(year, month - 1, 1))
@@ -96,6 +101,11 @@ export default function CalendarPage() {
 
           <Card>
             <CardContent className="p-4">
+              {loading ? (
+                <div className="flex justify-center py-12">
+                  <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
               <div className="calendar-grid">
                 {["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"].map(d => (
                   <div key={d} className="calendar-header">{d}</div>
@@ -124,6 +134,7 @@ export default function CalendarPage() {
                   )
                 })}
               </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -153,13 +164,14 @@ export default function CalendarPage() {
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        {e.time && (
+                        {e.time ? (
                           <Badge variant="secondary" className="text-[9px] gap-1">
                             <Clock className="w-2.5 h-2.5" />
                             {e.time}
                           </Badge>
+                        ) : (
+                          <Badge variant="secondary" className="text-[9px]">Весь день</Badge>
                         )}
-                        {!e.time && <Badge variant="secondary" className="text-[9px]">Весь день</Badge>}
                       </div>
                       <h4 className="font-bold text-sm">{e.title}</h4>
                       {e.description && (
