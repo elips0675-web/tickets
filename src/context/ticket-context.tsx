@@ -10,7 +10,7 @@ interface TicketContextType {
   updateTicketPriority: (id: number, priority: TicketPriority) => void
   assignTicket: (id: number, employeeId: number) => void
   addMessage: (ticketId: number, text: string, isInternal: boolean) => void
-  createTicket: (ticket: { title: string; description: string; priority: TicketPriority; category: string }) => void
+  createTicket: (ticket: { title: string; description: string; priority: TicketPriority; category: string; computerName?: string; userAccount?: string }) => void
 }
 
 const TicketContext = createContext<TicketContextType | null>(null)
@@ -59,7 +59,7 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     }))
   }, [])
 
-  const createTicket = useCallback((data: { title: string; description: string; priority: TicketPriority; category: string }) => {
+  const createTicket = useCallback((data: { title: string; description: string; priority: TicketPriority; category: string; computerName?: string; userAccount?: string }) => {
     const newTicket: Ticket = {
       id: Date.now(),
       title: data.title,
@@ -67,6 +67,8 @@ export function TicketProvider({ children }: { children: ReactNode }) {
       status: "open",
       priority: data.priority as TicketPriority,
       category: data.category as any,
+      computerName: data.computerName,
+      userAccount: data.userAccount,
       createdBy: { id: 1, name: "Алексей Петров", email: "alexey@example.com", avatar: "" },
       messages: [{
         id: Date.now(),

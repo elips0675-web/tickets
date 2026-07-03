@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useTickets } from "@/context/ticket-context"
-import { ArrowLeft, Send } from "lucide-react"
+import { ArrowLeft, Monitor, Send, Terminal } from "lucide-react"
 import type { TicketPriority } from "@/types"
 
 export default function NewTicket() {
@@ -16,11 +16,13 @@ export default function NewTicket() {
   const [description, setDescription] = useState("")
   const [priority, setPriority] = useState<TicketPriority>("medium")
   const [category, setCategory] = useState("support")
+  const [computerName, setComputerName] = useState("")
+  const [userAccount, setUserAccount] = useState("")
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!title.trim() || !description.trim()) return
-    createTicket({ title, description, priority, category })
+    createTicket({ title, description, priority, category, computerName: computerName || undefined, userAccount: userAccount || undefined })
     navigate("/tickets")
   }
 
@@ -90,6 +92,27 @@ export default function NewTicket() {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            <div className="space-y-1.5 p-3 rounded-lg bg-muted/30">
+              <label className="text-xs font-bold text-muted-foreground flex items-center gap-1.5">
+                <Monitor className="w-3 h-3" /> Системная информация (опционально)
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Input
+                  value={computerName}
+                  onChange={e => setComputerName(e.target.value)}
+                  placeholder="Имя компьютера"
+                />
+                <Input
+                  value={userAccount}
+                  onChange={e => setUserAccount(e.target.value)}
+                  placeholder="Домен\Пользователь"
+                />
+              </div>
+              <p className="text-[10px] text-muted-foreground">
+                Запустите скрипт <code className="text-primary">scripts\get-system-info.ps1</code> чтобы узнать данные
+              </p>
             </div>
 
             <div className="flex justify-end gap-3 pt-2">

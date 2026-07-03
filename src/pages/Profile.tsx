@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { User, Mail, Phone, Briefcase, MapPin, FileText, Settings, LogOut, Camera, Save } from "lucide-react"
+import { User, Mail, Phone, Briefcase, MapPin, FileText, Settings, Camera, Save, Monitor, Copy, CheckCheck } from "lucide-react"
 
 const DEMO_USER = {
   id: 1,
@@ -30,6 +30,26 @@ export default function ProfilePage() {
   const [editing, setEditing] = useState(false)
   const [user, setUser] = useState(DEMO_USER)
   const [form, setForm] = useState({ ...DEMO_USER })
+  const [copied, setCopied] = useState(false)
+  const [sysInfo, setSysInfo] = useState({ computerName: "", userAccount: "" })
+
+  const updateSysInfo = () => {
+    const name = (document.getElementById("sys-computer") as HTMLInputElement)?.value || ""
+    const account = (document.getElementById("sys-account") as HTMLInputElement)?.value || ""
+    setSysInfo({ computerName: name, userAccount: account })
+    localStorage.setItem("sysInfo", JSON.stringify({ computerName: name, userAccount: account }))
+  }
+
+  useEffect(() => {
+    const saved = localStorage.getItem("sysInfo")
+    if (saved) setSysInfo(JSON.parse(saved))
+  }, [])
+
+  const copyScript = () => {
+    navigator.clipboard.writeText('powershell -ExecutionPolicy Bypass -File scripts\\get-system-info.ps1')
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   const saveProfile = () => {
     setUser({ ...form })
@@ -108,6 +128,28 @@ export default function ProfilePage() {
                     </div>
                   </>
                 )}
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="mt-4">
+            <CardContent className="p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <Monitor className="w-4 h-4 text-primary" />
+                <h3 className="font-bold text-sm">Текущее устройство</h3>
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Имя компьютера</label>
+                  <Input id="sys-computer" defaultValue={sysInfo.computerName} onChange={updateSysInfo} placeholder="Например: PC-IT-01" className="text-sm" />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Учётная запись</label>
+                  <Input id="sys-account" defaultValue={sysInfo.userAccount} onChange={updateSysInfo} placeholder="Домен\Пользователь" className="text-sm" />
+                </div>
+                <Button variant="outline" size="sm" onClick={copyScript} className="gap-1.5 w-full">
+                  {copied ? <CheckCheck className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copied ? "Скопировано" : "Копировать команду для скрипта"}
+                </Button>
               </div>
             </CardContent>
           </Card>

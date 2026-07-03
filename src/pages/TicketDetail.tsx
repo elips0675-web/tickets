@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator"
 import { useTickets } from "@/context/ticket-context"
 import { formatDate, formatTime } from "@/lib/utils"
-import { ArrowLeft, Send, User, MessageSquare, Tag, Lock, ExternalLink } from "lucide-react"
+import { ArrowLeft, Send, User, MessageSquare, Tag, Lock, ExternalLink, Monitor } from "lucide-react"
 import type { TicketStatus, TicketPriority } from "@/types"
 
 export default function TicketDetail() {
@@ -228,6 +228,25 @@ export default function TicketDetail() {
                 <p className="text-xs text-muted-foreground">Обновлён</p>
                 <p className="text-sm">{formatDate(ticket.updatedAt)}</p>
               </div>
+              {(ticket.computerName || ticket.userAccount) && (
+                <div className="pt-3 border-t space-y-2">
+                  <p className="text-xs font-bold text-muted-foreground flex items-center gap-1">
+                    <Monitor className="w-3 h-3" /> Система
+                  </p>
+                  {ticket.computerName && (
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs text-muted-foreground">Компьютер:</p>
+                      <p className="text-sm font-medium">{ticket.computerName}</p>
+                    </div>
+                  )}
+                  {ticket.userAccount && (
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs text-muted-foreground">Учётная запись:</p>
+                      <p className="text-sm font-mono text-xs">{ticket.userAccount}</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

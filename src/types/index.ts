@@ -46,6 +46,8 @@ export interface Ticket {
   createdAt: string
   updatedAt: string
   tags: string[]
+  computerName?: string
+  userAccount?: string
 }
 
 export interface TicketStats {
