@@ -24,6 +24,7 @@
     "mysql2": "^3.11.0",
     "socket.io": "^4.8.3",
     "supertest": "^7.2.2",
-    "vitest": "^4.1.9"
+    "vitest": "^4.1.9",
+    "web-push": "^3.6.7"
   }
 }

@@ -1,9 +1,23 @@
 import { Router } from 'express'
+import webpush from 'web-push'
 import pool from '../db.js'
-import { authenticateToken } from '../middleware.js'
+import { authenticateToken, requireRole } from '../middleware.js'
+
+const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY
+const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY
+const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:admin@servicedesk.local'
+
+if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
+  webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY)
+}
 
 const router = Router()
 router.use(authenticateToken)
+
+router.get('/vapid-key', (req, res) => {
+  if (!VAPID_PUBLIC_KEY) return res.status(500).json({ message: 'VAPID not configured' })
+  res.json({ publicKey: VAPID_PUBLIC_KEY })
+})
 
 router.get('/subscription', async (req, res) => {
   try {
@@ -35,7 +49,39 @@ router.delete('/unsubscribe', async (req, res) => {
     await pool.query('DELETE FROM push_subscriptions WHERE user_id = ?', [req.user.userId])
     res.json({ ok: true })
   } catch (err) {
+    console.error('Unsubscribe error:', err)
     res.status(500).json({ message: 'Failed to unsubscribe' })
+  }
+})
+
+router.post('/send', requireRole('admin', 'senior_agent'), async (req, res) => {
+  const { title, body, url } = req.body
+  if (!title) return res.status(400).json({ message: 'Title is required' })
+
+  try {
+    const [rows] = await pool.query('SELECT user_id, subscription_json FROM push_subscriptions')
+    if (!rows.length) return res.json({ sent: 0, total: 0 })
+
+    const payload = JSON.stringify({ title, body: body || '', url: url || '/', icon: '/icon.svg' })
+    let sent = 0, failed = 0
+
+    await Promise.allSettled(rows.map(async (row) => {
+      try {
+        const sub = JSON.parse(row.subscription_json)
+        await webpush.sendNotification(sub, payload)
+        sent++
+      } catch (err) {
+        if (err.statusCode === 410 || err.statusCode === 404) {
+          await pool.query('DELETE FROM push_subscriptions WHERE user_id = ?', [row.user_id])
+        }
+        failed++
+      }
+    }))
+
+    res.json({ sent, failed, total: rows.length })
+  } catch (err) {
+    console.error('Send push error:', err)
+    res.status(500).json({ message: 'Failed to send push notifications' })
   }
 })
 

@@ -1,25 +1,38 @@
-self.addEventListener('install', (e) => {
-  self.skipWaiting()
+importScripts('https://storage.googleapis.com/workbox-cdn/releases/7.3.0/workbox-sw.js')
+
+workbox.precaching.precacheAndRoute(self.__WB_MANIFEST || [])
+
+self.addEventListener('push', (event) => {
+  if (!event.data) return
+  try {
+    const { title, body, url, icon } = event.data.json()
+    event.waitUntil(
+      self.registration.showNotification(title, {
+        body,
+        icon: icon || '/icon.svg',
+        badge: '/icon.svg',
+        data: { url },
+      })
+    )
+  } catch {
+    event.waitUntil(
+      self.registration.showNotification(event.data.text(), {
+        icon: '/icon.svg',
+        badge: '/icon.svg',
+      })
+    )
+  }
 })
 
-self.addEventListener('activate', (e) => {
-  e.waitUntil(clients.claim())
-})
-
-self.addEventListener('push', (e) => {
-  const data = e.data?.json() || { title: 'Service Desk', body: 'Новое уведомление' }
-  e.waitUntil(
-    self.registration.showNotification(data.title, {
-      body: data.body,
-      icon: '/icon.svg',
-      badge: '/icon.svg',
-      data: data.url ? { url: data.url } : undefined,
-    }),
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  const url = event.notification.data?.url || '/'
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url.includes(self.location.origin) && 'focus' in client) return client.focus()
+      }
+      if (clients.openWindow) return clients.openWindow(url)
+    })
   )
-})
-
-self.addEventListener('notificationclick', (e) => {
-  e.notification.close()
-  const url = e.notification.data?.url || '/'
-  e.waitUntil(clients.openWindow(url))
 })
