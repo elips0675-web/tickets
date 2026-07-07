@@ -10,7 +10,7 @@ interface BeforeInstallPromptEvent extends Event {
 
 export function PwaInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
-  const [dismissed, setDismissed] = useState(false)
+  const [dismissed, setDismissed] = useState(() => localStorage.getItem("pwa-dismissed") === "true")
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -30,6 +30,11 @@ export function PwaInstallPrompt() {
     setDeferredPrompt(null)
   }
 
+  const handleDismiss = () => {
+    setDismissed(true)
+    localStorage.setItem("pwa-dismissed", "true")
+  }
+
   return (
     <div className={cn(
       "fixed bottom-20 left-2 right-2 z-50 md:bottom-4 md:left-auto md:right-4 md:w-80",
@@ -45,7 +50,7 @@ export function PwaInstallPrompt() {
       <Button size="sm" onClick={handleInstall} className="shrink-0">
         Установить
       </Button>
-      <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => setDismissed(true)}>
+      <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={handleDismiss}>
         <X className="h-4 w-4" />
       </Button>
     </div>

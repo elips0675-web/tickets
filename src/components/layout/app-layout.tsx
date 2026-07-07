@@ -84,6 +84,7 @@ function MobileHeader({ onMenuClick }: { onMenuClick: () => void }) {
 
 function MobileBottomNav({ onMenuClick }: { onMenuClick: () => void }) {
   const nav = useNavigate()
+  const { logout } = useAuth()
   const location = useLocation()
 
   const isActive = (path: string) => {
@@ -109,11 +110,18 @@ function MobileBottomNav({ onMenuClick }: { onMenuClick: () => void }) {
         </button>
       ))}
       <button
+        onClick={() => { logout(); window.location.href = '/login' }}
+        className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg transition-colors min-w-0 flex-1 text-muted-foreground hover:text-destructive"
+      >
+        <LogOut className="w-5 h-5" />
+        <span className="text-[10px] font-medium leading-tight">Выйти</span>
+      </button>
+      <button
         onClick={onMenuClick}
         className="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg transition-colors min-w-0 flex-1 text-muted-foreground hover:text-foreground"
       >
         <MoreHorizontal className="w-5 h-5" />
-        <span className="text-[10px] font-medium leading-tight">Ещё</span>
+        <span className="text-[10px] font-medium leading-tight">Меню</span>
       </button>
     </nav>
   )
