@@ -94,10 +94,59 @@
 - Запущены серверные тесты (17/17) — все пройдены
 - Обновлён AGENTS.md с профилем разработчика и правилами
 
-## Осталось
+### Этап 11 — Доработка файлового хранилища
+- **files.js**: добавлен multer с дисковым хранилищем (было только JSON-метаданные)
+- **Files.tsx**: переход на FormData, открытие файлов по клику (через `/uploads/files/...`)
+- **seed.sql**: добавлена колонка `path` в таблицу `files`
+- **types/index.ts**: добавлено поле `path` в `FileItem`
 
-- **Интеграция с бэкендом** — ticket-context (тикеты, дашборд) ещё на демо-данных
-- **Тёмная тема** — CSS vars есть, переключатель удалён (не требуется)
-- **Загрузка файлов (drag & drop)** — только demo
-- **Деплой** — сборка и развёртывание проекта
-- **Telegram, PDF, email, CI/CD, десктоп** — опциональные улучшения
+## Состояние проекта
+
+Всё, что планировалось на 10 этапов — выполнено. Проект полностью рабочий:
+
+| Компонент | Статус |
+|-----------|--------|
+| Тикеты (CRUD, статусы, приоритеты, назначение) | ✅ API + UI |
+| Дашборд (статистика, графики, сотрудники) | ✅ API (с fallback на demo) |
+| Чаты (WebSocket, сообщения, файлы) | ✅ Socket.io |
+| Wiki (статьи, категории, поиск, изображения) | ✅ API + UI |
+| Новости (лента, фильтры, создание) | ✅ API + UI |
+| Календарь (события, CRUD) | ✅ API + UI |
+| Опросы (голосование, создание) | ✅ API + UI |
+| Файлы (drag & drop, папки, загрузка) | ✅ multer + FormData |
+| Сотрудники (список, карточки/таблица, фильтры) | ✅ API + UI |
+| Поиск (глобальный, Ctrl+K) | ✅ API + UI |
+| Админка (пользователи, push, настройки, аудит) | ✅ API + UI |
+| RBAC (admin/senior_agent/agent) | ✅ middleware + ProtectedRoute |
+| Аутентификация (JWT, логин, регистрация) | ✅ API + UI |
+| PWA (service worker, push, install prompt) | ✅ injectManifest |
+| WebSocket (real-time уведомления, чаты) | ✅ Socket.io |
+| Тёмная тема (CSS vars, переключатель) | ✅ (переключатель скрыт) |
+| CI/CD (GitHub Actions) | ✅ .github/workflows/ci.yml |
+| Docker (compose, 3 контейнера) | ✅ docker-compose.yml |
+| Vercel (SPA routing) | ✅ vercel.json |
+| Tauri (десктоп) | ✅ config + Rust |
+| Email (nodemailer) | ✅ server/src/email.js |
+| Telegram (бот) | ✅ server/src/telegram.js |
+| PDF/CSV экспорт | ✅ jsPDF + html2canvas / UTF-8 BOM |
+| i18n (RU/EN) | ✅ i18next |
+| Уведомления (колокольчик) | ✅ API + socket + UI |
+
+## Деплой
+
+```bash
+# Docker (prod)
+docker compose up -d --build
+
+# Локальная разработка
+# 1. Запустить MySQL (Laragon или Docker)
+# 2. cp server/.env.example server/.env
+# 3. cd server && npm run dev
+# 4. cd .. && npm run dev
+```
+
+## Опциональные улучшения (не требуются)
+- E2E-тесты (Playwright/Cypress)
+- Swagger/OpenAPI документация
+- Redis для WebSocket state
+- Kubernetes манифесты
