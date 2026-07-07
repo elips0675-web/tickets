@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react"
 import { BrowserRouter, Route, Routes } from "react-router-dom"
 import { Toaster } from "sonner"
 import { AppLayout } from "@/components/layout/app-layout"
@@ -14,24 +15,25 @@ import Employees from "@/pages/Employees"
 import NewTicket from "@/pages/NewTicket"
 import CalendarPage from "@/pages/Calendar"
 import PollsPage from "@/pages/Polls"
-import FilesPage from "@/pages/Files"
 import ChatsPage from "@/pages/Chats"
 import ChatDetail from "@/pages/ChatDetail"
 import ProfilePage from "@/pages/Profile"
-import WikiPage from "@/pages/Wiki"
-import SearchPage from "@/pages/Search"
 import NewsPage from "@/pages/News"
 import KanbanPage from "@/pages/Kanban"
 import Login from "@/pages/Login"
 import ForgotPassword from "@/pages/ForgotPassword"
 import ResetPassword from "@/pages/ResetPassword"
 import Register from "@/pages/Register"
-import Admin from "@/pages/Admin"
-import AdminUsers from "@/pages/AdminUsers"
-import AdminPush from "@/pages/AdminPush"
-import AdminSettings from "@/pages/AdminSettings"
-import AdminAudit from "@/pages/AdminAudit"
 import NotFound from "@/pages/NotFound"
+
+const Admin = lazy(() => import("@/pages/Admin"))
+const AdminUsers = lazy(() => import("@/pages/AdminUsers"))
+const AdminPush = lazy(() => import("@/pages/AdminPush"))
+const AdminSettings = lazy(() => import("@/pages/AdminSettings"))
+const AdminAudit = lazy(() => import("@/pages/AdminAudit"))
+const WikiPage = lazy(() => import("@/pages/Wiki"))
+const SearchPage = lazy(() => import("@/pages/Search"))
+const FilesPage = lazy(() => import("@/pages/Files"))
 import ProtectedRoute from "@/components/ProtectedRoute"
 
 export default function App() {
@@ -41,6 +43,7 @@ export default function App() {
       <SocketProvider>
       <TicketProvider>
         <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <Suspense fallback={<div className="flex items-center justify-center h-screen text-muted-foreground text-sm">Загрузка…</div>}>
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -76,6 +79,7 @@ export default function App() {
               </AppLayout>
             } />
           </Routes>
+          </Suspense>
         </BrowserRouter>
         <Toaster position="top-right" richColors />
       </TicketProvider>
