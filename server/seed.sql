@@ -245,3 +245,21 @@ INSERT INTO ticket_messages (ticket_id, sender_id, sender_name, text, created_at
 (4, 13, 'Анна Разработчик', 'Документация устарела, нужно обновить.', '2026-06-30 14:00:00'),
 (5, 10, 'Иван Клиент', 'Очень долго грузится список чатов.', '2026-06-28 11:00:00'),
 (5, 4, 'Елена Козлова', 'Оптимизировала запросы, добавила индексы.', '2026-06-29 16:00:00');
+
+-- Performance indexes
+CREATE INDEX IF NOT EXISTS idx_tickets_status ON tickets(status);
+CREATE INDEX IF NOT EXISTS idx_tickets_priority ON tickets(priority);
+CREATE INDEX IF NOT EXISTS idx_tickets_assigned_to ON tickets(assigned_to);
+CREATE INDEX IF NOT EXISTS idx_tickets_created_by ON tickets(created_by);
+CREATE INDEX IF NOT EXISTS idx_tickets_updated_at ON tickets(updated_at);
+CREATE INDEX IF NOT EXISTS idx_tickets_created_at ON tickets(created_at);
+CREATE INDEX IF NOT EXISTS idx_ticket_messages_ticket ON ticket_messages(ticket_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_wiki_articles_category ON wiki_articles(category);
+CREATE INDEX IF NOT EXISTS idx_wiki_articles_updated ON wiki_articles(updated_at);
+CREATE INDEX IF NOT EXISTS idx_news_posts_important ON news_posts(important, created_at);
+CREATE INDEX IF NOT EXISTS idx_files_folder ON files(folder_id);
+CREATE INDEX IF NOT EXISTS idx_events_date ON events(date);
+CREATE INDEX IF NOT EXISTS idx_chat_messages_chat ON chat_messages(chat_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_audit_log_entity ON audit_log(entity_type, entity_id);
+CREATE INDEX IF NOT EXISTS idx_audit_log_created ON audit_log(created_at);

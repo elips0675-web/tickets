@@ -29,26 +29,37 @@ const router = Router()
 
 router.use(authenticateToken)
 
-// GET /api/tickets — list all tickets
+// GET /api/tickets — list tickets with pagination
 router.get('/', async (req, res) => {
+  const page = Math.max(1, parseInt(req.query.page) || 1)
+  const limit = Math.min(10000, Math.max(1, parseInt(req.query.limit) || 1000))
+  const offset = (page - 1) * limit
   try {
+    const [[{ total }]] = await pool.query('SELECT COUNT(*) as total FROM tickets')
     const [rows] = await pool.query(`
       SELECT t.*, 
-        e.name as assigned_name, e.email as assigned_email, e.avatar as assigned_avatar,
-        JSON_ARRAYAGG(
-          JSON_OBJECT(
-            'id', m.id, 'ticketId', m.ticket_id, 'senderId', m.sender_id,
-            'senderName', m.sender_name, 'text', m.text,
-            'createdAt', m.created_at, 'isInternal', m.is_internal
-          )
-        ) as messages
+        e.name as assigned_name, e.email as assigned_email, e.avatar as assigned_avatar
       FROM tickets t
       LEFT JOIN employees e ON t.assigned_to = e.id
-      LEFT JOIN ticket_messages m ON m.ticket_id = t.id
-      GROUP BY t.id
       ORDER BY t.updated_at DESC
-    `)
-    res.json(rows)
+      LIMIT ? OFFSET ?
+    `, [limit, offset])
+    const ids = rows.map(r => r.id)
+    if (ids.length > 0) {
+      const [messages] = await pool.query(
+        'SELECT * FROM ticket_messages WHERE ticket_id IN (?) ORDER BY created_at ASC',
+        [ids],
+      )
+      const msgMap = {}
+      for (const m of messages) {
+        if (!msgMap[m.ticket_id]) msgMap[m.ticket_id] = []
+        msgMap[m.ticket_id].push(m)
+      }
+      for (const r of rows) {
+        r.messages = msgMap[r.id] || []
+      }
+    }
+    res.json({ data: rows, total, page, totalPages: Math.ceil(total / limit) })
   } catch (err) {
     console.error('Tickets list error:', err)
     res.status(500).json({ message: 'Failed to fetch tickets' })

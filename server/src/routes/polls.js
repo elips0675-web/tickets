@@ -7,33 +7,47 @@ const router = Router()
 router.use(authenticateToken)
 
 router.get('/', async (req, res) => {
+  const page = Math.max(1, parseInt(req.query.page) || 1)
+  const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 50))
+  const offset = (page - 1) * limit
   try {
+    const [[{ total }]] = await pool.query('SELECT COUNT(*) as total FROM polls')
     const [rows] = await pool.query(`
       SELECT p.*,
         (SELECT COUNT(*) FROM poll_options WHERE poll_id = p.id) as options_count,
         (SELECT COUNT(*) FROM poll_votes WHERE poll_id = p.id) as total_votes
-      FROM polls p ORDER BY p.created_at DESC
-    `)
-    const result = []
-    for (const poll of rows) {
-      const [opts] = await pool.query(
+      FROM polls p ORDER BY p.created_at DESC LIMIT ? OFFSET ?
+    `, [limit, offset])
+    const pollIds = rows.map(r => r.id)
+    if (pollIds.length > 0) {
+      const ph = pollIds.map(() => '?').join(',')
+      const [allOpts] = await pool.query(
         `SELECT o.*, (SELECT COUNT(*) FROM poll_votes WHERE option_id = o.id AND user_id = ?) > 0 as voted
-         FROM poll_options o WHERE o.poll_id = ? ORDER BY o.id`,
-        [req.user.userId, poll.id],
+         FROM poll_options o WHERE o.poll_id IN (${ph}) ORDER BY o.id`,
+        [req.user.userId, ...pollIds],
       )
-      const [myVotes] = await pool.query(
-        'SELECT option_id FROM poll_votes WHERE poll_id = ? AND user_id = ?',
-        [poll.id, req.user.userId],
+      const [allVotes] = await pool.query(
+        `SELECT poll_id, option_id FROM poll_votes WHERE poll_id IN (${ph}) AND user_id = ?`,
+        [...pollIds, req.user.userId],
       )
-      result.push({
-        ...poll,
-        options: opts,
-        totalVotes: poll.total_votes,
-        myVotes: myVotes.map(v => v.option_id),
-        multipleChoice: !!poll.multiple_choice,
-      })
+      const optsByPoll = {}
+      for (const o of allOpts) {
+        if (!optsByPoll[o.poll_id]) optsByPoll[o.poll_id] = []
+        optsByPoll[o.poll_id].push(o)
+      }
+      const votesByPoll = {}
+      for (const v of allVotes) {
+        if (!votesByPoll[v.poll_id]) votesByPoll[v.poll_id] = []
+        votesByPoll[v.poll_id].push(v.option_id)
+      }
+      for (const poll of rows) {
+        poll.options = optsByPoll[poll.id] || []
+        poll.myVotes = votesByPoll[poll.id] || []
+        poll.multipleChoice = !!poll.multiple_choice
+        poll.totalVotes = poll.total_votes
+      }
     }
-    res.json(result)
+    res.json({ data: rows, total, page, totalPages: Math.ceil(total / limit) })
   } catch (err) {
     console.error('Polls list error:', err)
     res.status(500).json({ message: 'Failed to fetch polls' })

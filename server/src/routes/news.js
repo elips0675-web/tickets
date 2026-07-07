@@ -7,11 +7,22 @@ const router = Router()
 router.use(authenticateToken)
 
 router.get('/', async (req, res) => {
+  const page = Math.max(1, parseInt(req.query.page) || 1)
+  const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 50))
+  const offset = (page - 1) * limit
+  const important = req.query.important
+  const q = req.query.q?.trim()
   try {
+    let where = '1=1'
+    const params = []
+    if (important === 'true') { where += ' AND important = 1' }
+    if (q) { where += ' AND (title LIKE ? OR content LIKE ?)'; params.push(`%${q}%`, `%${q}%`) }
+    const [[{ total }]] = await pool.query(`SELECT COUNT(*) as total FROM news_posts WHERE ${where}`, params)
     const [rows] = await pool.query(
-      'SELECT id, title, content, important, author_id, author_name, created_at FROM news_posts ORDER BY important DESC, created_at DESC',
+      `SELECT id, title, content, important, author_id, author_name, created_at FROM news_posts WHERE ${where} ORDER BY important DESC, created_at DESC LIMIT ? OFFSET ?`,
+      [...params, limit, offset],
     )
-    res.json(rows)
+    res.json({ data: rows, total, page, totalPages: Math.ceil(total / limit) })
   } catch (err) {
     console.error('News list error:', err)
     res.status(500).json({ message: 'Failed to fetch news' })

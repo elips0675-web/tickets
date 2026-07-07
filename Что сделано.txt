@@ -175,9 +175,11 @@
   Безопасность:
     ✅ bcrypt (10 раундов), параметризованные SQL-запросы, rate-limit,
        helmet, express-validator (7 роутов)
-    🔴 /uploads — express.static БЕЗ аутентификации (любой файл по URL)
-    🔴 /dev-login не отключается в production (выдаёт admin без пароля)
-    🟡 /api/system-info без auth (раскрывает имя ПК/домен)
+    ✅ /uploads — JWT-аутентификация (header Bearer / ?token=)
+    ✅ /dev-login — отключён в production (404)
+    ✅ /api/system-info — защищён authenticateToken
+    ✅ Error Boundary на клиенте (src/components/ErrorBoundary.tsx)
+    ✅ auth.js — все ответы в формате { message } (было 2 { error })
 
   Тестирование:
     ✅ 14 клиентских + 17 серверных тестов, Playwright + Chromium
@@ -203,9 +205,11 @@
 
   Производительность:
     ✅ Redis для Socket.io (опционально, fallback in-memory)
-    🔴 Нет серверной пагинации на 9/12 эндпоинтов (возвращают всё)
-    🔴 Нет ни одного CREATE INDEX (только PK + 2 UNIQUE)
-    🟡 N+1 в polls.js и files.js, client-side пагинация
+    ✅ Серверная пагинация: tickets (LIMIT/OFFSET + messages отдельно),
+      news (с фильтрами ?important&q=), wiki, files, polls (без N+1)
+    ✅ CREATE INDEX (16 шт) в seed.sql
+    ✅ N+1 в polls.js исправлен (IN() вместо цикла)
+    ✅ News.tsx на серверной пагинации
 
   Инфраструктура:
     ✅ Docker, K8s, Vercel, Tauri, CI/CD, Swagger, Playwright

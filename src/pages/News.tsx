@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -35,26 +35,19 @@ export default function NewsPage() {
   const [newContent, setNewContent] = useState("")
   const [newImportant, setNewImportant] = useState(false)
   const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
 
   useEffect(() => {
-    fetch(`${API}/news`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(res => res.ok ? res.json() : [])
-      .then(data => { setNews(data.map(mapNews)); setLoading(false) })
+    const params = new URLSearchParams({ page: String(page), limit: String(PER_PAGE) })
+    if (showImportant) params.set('important', 'true')
+    if (search.trim()) params.set('q', search.trim())
+    fetch(`${API}/news?${params}`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => res.ok ? res.json() : { data: [], total: 0, totalPages: 1 })
+      .then(({ data, total, totalPages: tp }) => { setNews(data.map(mapNews)); setTotalPages(tp || Math.ceil((total || 0) / PER_PAGE)); setLoading(false) })
       .catch(() => setLoading(false))
-  }, [token])
+  }, [token, page, search, showImportant])
 
-  const filtered = useMemo(() => {
-    let items = news
-    if (showImportant) items = items.filter(n => n.important)
-    if (search.trim()) {
-      const q = search.toLowerCase()
-      items = items.filter(n => n.title.toLowerCase().includes(q) || n.content.toLowerCase().includes(q))
-    }
-    return items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-  }, [news, search, showImportant])
-
-  const totalPages = Math.ceil(filtered.length / PER_PAGE)
-  const paged = filtered.slice(0, page * PER_PAGE)
+  const paged = news
   const resetPage = () => setPage(1)
 
   const handleCreate = async () => {
@@ -125,7 +118,7 @@ export default function NewsPage() {
         </div>
       ) : (
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-        {filtered.length === 0 && (
+        {news.length === 0 && (
           <div className="col-span-full text-center py-16 text-muted-foreground">
             <Newspaper className="w-12 h-12 mx-auto mb-3 opacity-30" />
             <p className="font-bold text-sm">Новости не найдены</p>

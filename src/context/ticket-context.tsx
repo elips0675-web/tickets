@@ -58,11 +58,11 @@ export function TicketProvider({ children }: { children: ReactNode }) {
     if (!token) return
     try {
       const [tRes, eRes] = await Promise.all([
-        fetch(`${API}/tickets`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${API}/tickets?limit=1000`, { headers: { Authorization: `Bearer ${token}` } }),
         fetch(`${API}/employees`, { headers: { Authorization: `Bearer ${token}` } }),
       ])
       if (tRes.ok) {
-        const data = await tRes.json()
+        const { data } = await tRes.json()
         setTickets(data.map(mapTicket))
       } else {
         setTickets(DEMO_TICKETS)

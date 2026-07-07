@@ -24,11 +24,16 @@ const router = Router()
 router.use(authenticateToken)
 
 router.get('/', async (req, res) => {
+  const page = Math.max(1, parseInt(req.query.page) || 1)
+  const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 50))
+  const offset = (page - 1) * limit
   try {
+    const [[{ total }]] = await pool.query('SELECT COUNT(*) as total FROM wiki_articles')
     const [rows] = await pool.query(
-      'SELECT id, title, content, category, tags, author_id, author_name, created_at, updated_at FROM wiki_articles ORDER BY updated_at DESC',
+      'SELECT id, title, content, category, tags, author_id, author_name, created_at, updated_at FROM wiki_articles ORDER BY updated_at DESC LIMIT ? OFFSET ?',
+      [limit, offset],
     )
-    res.json(rows)
+    res.json({ data: rows, total, page, totalPages: Math.ceil(total / limit) })
   } catch (err) {
     console.error('Wiki list error:', err)
     res.status(500).json({ message: 'Failed to fetch articles' })

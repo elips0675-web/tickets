@@ -23,6 +23,9 @@ const router = Router()
 router.use(authenticateToken)
 
 router.get('/folders', async (req, res) => {
+  const page = Math.max(1, parseInt(req.query.page) || 1)
+  const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 50))
+  const offset = (page - 1) * limit
   try {
     const [folders] = await pool.query(
       'SELECT * FROM file_folders WHERE user_id = ? OR is_shared = 1 ORDER BY name',
@@ -30,10 +33,12 @@ router.get('/folders', async (req, res) => {
     )
     for (const f of folders) {
       const [files] = await pool.query(
-        'SELECT id, name, size, type, folder_id as folderId, path, created_at as createdAt FROM files WHERE folder_id = ? ORDER BY created_at DESC',
-        [f.id],
+        'SELECT id, name, size, type, folder_id as folderId, path, created_at as createdAt FROM files WHERE folder_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?',
+        [f.id, limit, offset],
       )
       f.files = files
+      const [[{ total }]] = await pool.query('SELECT COUNT(*) as total FROM files WHERE folder_id = ?', [f.id])
+      f.totalFiles = total
     }
     res.json(folders)
   } catch (err) {
