@@ -8,6 +8,7 @@ import { PwaInstallPrompt } from "@/components/pwa-install-prompt"
 import { cn } from "@/lib/utils"
 import NotificationBell from "@/components/NotificationBell"
 import LanguageSwitcher from "@/components/LanguageSwitcher"
+import { useAuth } from "@/context/AuthContext"
 
 const bottomNavItems = [
   { to: "/", icon: LayoutDashboard, label: "Дашборд" },
