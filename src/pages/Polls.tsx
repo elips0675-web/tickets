@@ -23,7 +23,7 @@ export default function PollsPage() {
   useEffect(() => {
     fetch(`${API}/polls`, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => res.ok ? res.json() : [])
-      .then(data => { setPolls(data); setLoading(false) })
+      .then(data => { setPolls(data.data ?? data); setLoading(false) })
       .catch(() => setLoading(false))
   }, [token])
 
