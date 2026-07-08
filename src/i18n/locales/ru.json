@@ -222,7 +222,14 @@
   "polls": {
     "title": "Опросы",
     "create": "Создать опрос",
+    "createTitle": "Новый опрос",
+    "question": "Вопрос",
+    "description": "Описание",
+    "optionLabel": "Вариант {number}",
+    "multipleChoice": "Множественный выбор",
+    "submitBtn": "Создать",
     "vote": "Голосовать",
+    "voters": "Проголосовало",
     "totalVotes": "Всего голосов",
     "noPolls": "Опросов пока нет"
   },

@@ -223,7 +223,14 @@
   "polls": {
     "title": "Polls",
     "create": "Create Poll",
+    "createTitle": "New Poll",
+    "question": "Question",
+    "description": "Description",
+    "optionLabel": "Option {number}",
+    "multipleChoice": "Multiple choice",
+    "submitBtn": "Create",
     "vote": "Vote",
+    "voters": "Voted",
     "totalVotes": "Total votes",
     "noPolls": "No polls yet"
   },
