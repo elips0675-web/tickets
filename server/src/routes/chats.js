@@ -61,4 +61,29 @@ router.put('/:id/read', async (req, res) => {
   }
 })
 
+router.post('/personal/:userId', async (req, res) => {
+  const { userId } = req.params
+  const myId = req.user.userId
+  if (Number(userId) === myId) return res.status(400).json({ message: 'Cannot chat with yourself' })
+  try {
+    const [[existing]] = await pool.query(
+      'SELECT * FROM chat_rooms WHERE type = ? AND name = (SELECT name FROM employees WHERE id = ?)',
+      ['personal', userId],
+    )
+    if (existing) return res.json(existing)
+
+    const [[userRow]] = await pool.query('SELECT name FROM employees WHERE id = ?', [userId])
+    if (!userRow) return res.status(404).json({ message: 'User not found' })
+    const [result] = await pool.query(
+      'INSERT INTO chat_rooms (name, type) VALUES (?, ?)',
+      [userRow.name, 'personal'],
+    )
+    const [[chat]] = await pool.query('SELECT * FROM chat_rooms WHERE id = ?', [result.insertId])
+    res.status(201).json(chat)
+  } catch (err) {
+    console.error('Create personal chat error:', err)
+    res.status(500).json({ message: 'Failed to create chat' })
+  }
+})
+
 export default router

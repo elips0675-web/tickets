@@ -170,6 +170,7 @@
     "department": "Отдел",
     "activeTickets": "{{count}} тикетов",
     "resolvedToday": "Решено сегодня",
+    "write": "Написать в ЛС",
     "searchPlaceholder": "Поиск по имени, отделу, email...",
     "agents": "Агенты",
     "seniorAgents": "Ст. агенты",

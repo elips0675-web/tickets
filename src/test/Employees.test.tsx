@@ -27,6 +27,7 @@ vi.mock('react-i18next', () => ({
         'employees.sortTickets': 'По тикетам',
         'employees.sortResolved': 'По решённым',
         'employees.exportCSV': 'CSV',
+        'employees.write': 'Написать в ЛС',
       }
       return map[key] || key
     },

@@ -171,6 +171,7 @@
     "department": "Department",
     "activeTickets": "{{count}} tickets",
     "resolvedToday": "Resolved today",
+    "write": "Write DM",
     "searchPlaceholder": "Search by name, department, email...",
     "agents": "Agents",
     "seniorAgents": "Senior Agents",
