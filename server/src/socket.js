@@ -98,6 +98,10 @@ export async function setupSocket(server) {
       }
     })
 
+    socket.on('chat:typing', ({ chatId }) => {
+      socket.to(`chat:${chatId}`).emit('chat:typing', { userId: socket.userId })
+    })
+
     socket.on('message:delete', async ({ chatId, msgId }) => {
       try {
         const [[msg]] = await pool.query('SELECT * FROM chat_messages WHERE id = ?', [msgId])

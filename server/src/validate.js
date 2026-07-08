@@ -92,3 +92,10 @@ export const createCalendarValidation = [
   body('date').isISO8601().withMessage('Valid date required'),
   handleErrors,
 ]
+
+export const updateCalendarValidation = [
+  param('id').isInt().withMessage('Invalid event ID'),
+  body('title').trim().isLength({ min: 1, max: 200 }).withMessage('Title required'),
+  body('date').isISO8601().withMessage('Valid date required'),
+  handleErrors,
+]

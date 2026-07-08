@@ -95,6 +95,9 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         ))}
       </nav>
 
+      <div className="px-3 py-1.5">
+        <NotificationBell inSidebar />
+      </div>
       <div className="p-3 border-t border-sidebar-border space-y-1">
         {filterByRole(bottomItems).map((item) => (
           <NavLink

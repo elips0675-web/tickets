@@ -378,7 +378,7 @@ export default function Employees() {
         </Card>
       )}
 
-      <EmployeeDetail employee={selected} onClose={() => setSelected(null)} />
+      <EmployeeDetail employee={selected} onClose={() => setSelected(null)} onChat={openChat} />
     </div>
   )
 }
@@ -475,7 +475,15 @@ function EmployeeCard({ employee, onClick, onChat }: { employee: Employee; onCli
   )
 }
 
-function EmployeeDetail({ employee, onClose }: { employee: Employee | null; onClose: () => void }) {
+function EmployeeDetail({
+  employee,
+  onClose,
+  onChat,
+}: {
+  employee: Employee | null
+  onClose: () => void
+  onChat?: (id: number) => void
+}) {
   const { t } = useTranslation()
   if (!employee) return null
   const roleLabels: Record<string, string> = {
@@ -537,6 +545,14 @@ function EmployeeDetail({ employee, onClose }: { employee: Employee | null; onCl
             <p className="text-xs text-muted-foreground">{t('employees.resolvedToday')}</p>
           </div>
         </div>
+        {onChat && (
+          <div className="mt-4">
+            <Button className="w-full gap-2" onClick={() => onChat(employee.id)}>
+              <MessageCircle className="w-4 h-4" />
+              {t('employees.write')}
+            </Button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   )

@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ChevronLeft, ChevronRight, Plus, Bell, Clock, Trash2, Download } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, Bell, Clock, Trash2, Download, Pencil } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import type { CalendarEvent } from '@/types'
 import { useAuth } from '@/context/AuthContext'
@@ -45,6 +45,7 @@ export default function CalendarPage() {
   const [date, setDate] = useState(new Date())
   const [selDay, setSelDay] = useState<number | null>(null)
   const [showAdd, setShowAdd] = useState(false)
+  const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null)
   const [form, setForm] = useState({ title: '', time: '', description: '' })
 
   const year = date.getFullYear()
@@ -86,6 +87,30 @@ export default function CalendarPage() {
     onError: () => toast.error(t('common.error')),
   })
 
+  const editMutation = useMutation({
+    mutationFn: async (body: {
+      id: number
+      title: string
+      date: string
+      time: string | null
+      description: string | null
+    }) => {
+      const res = await fetch(`${API_URL}/calendar/${body.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(body),
+      })
+      if (!res.ok) throw new Error('Failed to update event')
+      return res.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['calendar'] })
+      setEditingEvent(null)
+      setForm({ title: '', time: '', description: '' })
+    },
+    onError: () => toast.error(t('common.error')),
+  })
+
   const firstDay = new Date(year, month, 1).getDay()
   const daysInMonth = new Date(year, month + 1, 0).getDate()
   const offset = firstDay === 0 ? 6 : firstDay - 1
@@ -100,15 +125,25 @@ export default function CalendarPage() {
 
   const isToday = (day: number) => today.getDate() === day && today.getMonth() === month && today.getFullYear() === year
 
-  const addEvent = () => {
-    if (!form.title.trim() || !selDay) return
-    const dayStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(selDay).padStart(2, '0')}`
-    addMutation.mutate({
-      title: form.title,
-      date: dayStr,
-      time: form.time || null,
-      description: form.description || null,
-    })
+  const saveEvent = () => {
+    if (!form.title.trim()) return
+    if (editingEvent) {
+      editMutation.mutate({
+        id: editingEvent.id,
+        title: form.title,
+        date: editingEvent.date,
+        time: form.time || null,
+        description: form.description || null,
+      })
+    } else if (selDay) {
+      const dayStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(selDay).padStart(2, '0')}`
+      addMutation.mutate({
+        title: form.title,
+        date: dayStr,
+        time: form.time || null,
+        description: form.description || null,
+      })
+    }
   }
 
   const prevMonth = () => setDate(new Date(year, month - 1, 1))
@@ -257,15 +292,29 @@ export default function CalendarPage() {
                         {e.description && <p className="text-xs text-muted-foreground mt-0.5">{e.description}</p>}
                       </div>
                       {canManage && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 shrink-0"
-                          onClick={() => deleteMutation.mutate(e.id)}
-                          aria-label={t('common.delete')}
-                        >
-                          <Trash2 className="w-3 h-3 text-destructive" />
-                        </Button>
+                        <div className="flex gap-0.5 shrink-0">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6"
+                            onClick={() => {
+                              setEditingEvent(e)
+                              setForm({ title: e.title, time: e.time || '', description: e.description || '' })
+                            }}
+                            aria-label={t('common.edit')}
+                          >
+                            <Pencil className="w-3 h-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6"
+                            onClick={() => deleteMutation.mutate(e.id)}
+                            aria-label={t('common.delete')}
+                          >
+                            <Trash2 className="w-3 h-3 text-destructive" />
+                          </Button>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -302,10 +351,19 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      <Dialog open={showAdd} onOpenChange={setShowAdd}>
+      <Dialog
+        open={showAdd || !!editingEvent}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowAdd(false)
+            setEditingEvent(null)
+            setForm({ title: '', time: '', description: '' })
+          }
+        }}
+      >
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>{t('calendar.createEvent')}</DialogTitle>
+            <DialogTitle>{editingEvent ? t('calendar.editEvent') : t('calendar.createEvent')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-1.5">
@@ -344,11 +402,25 @@ export default function CalendarPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAdd(false)}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowAdd(false)
+                setEditingEvent(null)
+                setForm({ title: '', time: '', description: '' })
+              }}
+            >
               {t('common.cancel')}
             </Button>
-            <Button onClick={addEvent} disabled={!form.title.trim() || addMutation.isPending}>
-              {addMutation.isPending ? t('common.loading') : t('calendar.submitBtn')}
+            <Button
+              onClick={saveEvent}
+              disabled={!form.title.trim() || addMutation.isPending || editMutation.isPending}
+            >
+              {addMutation.isPending || editMutation.isPending
+                ? t('common.loading')
+                : editingEvent
+                  ? t('common.save')
+                  : t('calendar.submitBtn')}
             </Button>
           </DialogFooter>
         </DialogContent>

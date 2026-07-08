@@ -206,6 +206,7 @@
     "subtitle": "Events & Reminders",
     "today": "Today",
     "createEvent": "New Event",
+    "editEvent": "Edit Event",
     "deleteEvent": "Delete",
     "noEvents": "No events this day",
     "upcoming": "Upcoming Events",

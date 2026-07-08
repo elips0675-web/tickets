@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import pool from '../db.js'
 import { authenticateToken, requireRole } from '../middleware.js'
-import { createCalendarValidation, deleteEventValidation } from '../validate.js'
+import { createCalendarValidation, updateCalendarValidation, deleteEventValidation } from '../validate.js'
 
 const router = Router()
 router.use(authenticateToken)
@@ -39,6 +39,24 @@ router.post('/', createCalendarValidation, async (req, res) => {
   } catch (err) {
     console.error('Create event error:', err)
     res.status(500).json({ message: 'Failed to create event' })
+  }
+})
+
+router.put('/:id', requireRole('admin', 'senior_agent'), updateCalendarValidation, async (req, res) => {
+  const { title, date, time, description } = req.body
+  try {
+    await pool.query(
+      'UPDATE events SET title = ?, date = ?, time = ?, description = ? WHERE id = ?',
+      [title, date, time || null, description || '', req.params.id],
+    )
+    const [[event]] = await pool.query(
+      'SELECT id, title, date, time, description, creator_id as creatorId, created_at as createdAt FROM events WHERE id = ?',
+      [req.params.id],
+    )
+    res.json(event)
+  } catch (err) {
+    console.error('Update event error:', err)
+    res.status(500).json({ message: 'Failed to update event' })
   }
 })
 

@@ -1,6 +1,6 @@
-import { createContext, useContext, useEffect, useState, useRef, useCallback, type ReactNode } from "react"
-import { io, type Socket } from "socket.io-client"
-import { useAuth } from "./AuthContext"
+import { createContext, useContext, useEffect, useState, useRef, useCallback, type ReactNode } from 'react'
+import { io, type Socket } from 'socket.io-client'
+import { useAuth } from './AuthContext'
 
 interface SocketContextType {
   socket: Socket | null
@@ -10,6 +10,7 @@ interface SocketContextType {
   joinChat: (chatId: number) => void
   leaveChat: (chatId: number) => void
   notifyAll: (data: { title: string; body: string; url?: string }) => void
+  sendTyping: (chatId: number) => void
 }
 
 const SocketContext = createContext<SocketContextType | null>(null)
@@ -22,34 +23,62 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!token) return
     const s = io({ auth: { token } })
-    s.on("connect", () => setConnected(true))
-    s.on("disconnect", () => setConnected(false))
+    s.on('connect', () => setConnected(true))
+    s.on('disconnect', () => setConnected(false))
     setSocket(s)
-    return () => { s.close(); setSocket(null); setConnected(false) }
+    return () => {
+      s.close()
+      setSocket(null)
+      setConnected(false)
+    }
   }, [token])
 
-  const sendMessage = useCallback((chatId: number, text: string) => {
-    socket?.emit("message:send", { chatId, text })
-  }, [socket])
+  const sendMessage = useCallback(
+    (chatId: number, text: string) => {
+      socket?.emit('message:send', { chatId, text })
+    },
+    [socket],
+  )
 
-  const deleteMessage = useCallback((chatId: number, msgId: number) => {
-    socket?.emit("message:delete", { chatId, msgId })
-  }, [socket])
+  const deleteMessage = useCallback(
+    (chatId: number, msgId: number) => {
+      socket?.emit('message:delete', { chatId, msgId })
+    },
+    [socket],
+  )
 
-  const joinChat = useCallback((chatId: number) => {
-    socket?.emit("join:chat", chatId)
-  }, [socket])
+  const joinChat = useCallback(
+    (chatId: number) => {
+      socket?.emit('join:chat', chatId)
+    },
+    [socket],
+  )
 
-  const leaveChat = useCallback((chatId: number) => {
-    socket?.emit("leave:chat", chatId)
-  }, [socket])
+  const leaveChat = useCallback(
+    (chatId: number) => {
+      socket?.emit('leave:chat', chatId)
+    },
+    [socket],
+  )
 
-  const notifyAll = useCallback((data: { title: string; body: string; url?: string }) => {
-    socket?.emit("notify:all", data)
-  }, [socket])
+  const notifyAll = useCallback(
+    (data: { title: string; body: string; url?: string }) => {
+      socket?.emit('notify:all', data)
+    },
+    [socket],
+  )
+
+  const sendTyping = useCallback(
+    (chatId: number) => {
+      socket?.emit('chat:typing', { chatId })
+    },
+    [socket],
+  )
 
   return (
-    <SocketContext.Provider value={{ socket, connected, sendMessage, deleteMessage, joinChat, leaveChat, notifyAll }}>
+    <SocketContext.Provider
+      value={{ socket, connected, sendMessage, deleteMessage, joinChat, leaveChat, notifyAll, sendTyping }}
+    >
       {children}
     </SocketContext.Provider>
   )
@@ -57,6 +86,6 @@ export function SocketProvider({ children }: { children: ReactNode }) {
 
 export function useSocket() {
   const ctx = useContext(SocketContext)
-  if (!ctx) throw new Error("useSocket must be used within SocketProvider")
+  if (!ctx) throw new Error('useSocket must be used within SocketProvider')
   return ctx
 }

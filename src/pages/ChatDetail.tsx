@@ -18,7 +18,7 @@ export default function ChatDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const chatId = Number(id)
-  const { sendMessage, deleteMessage, joinChat, leaveChat, socket } = useSocket()
+  const { sendMessage, deleteMessage, joinChat, leaveChat, socket, sendTyping } = useSocket()
   const { user, token } = useAuth()
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [chatInfo, setChatInfo] = useState<{ name: string; type: string }>({ name: 'Чат', type: 'personal' })
@@ -29,6 +29,8 @@ export default function ChatDetail() {
   const [showSearch, setShowSearch] = useState(false)
   const [imageFile, setImageFile] = useState<string | null>(null)
   const [previewImg, setPreviewImg] = useState<string | null>(null)
+  const [typingUsers, setTypingUsers] = useState<number[]>([])
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const msgEndRef = useRef<HTMLDivElement>(null)
 
@@ -49,18 +51,31 @@ export default function ChatDetail() {
 
   useEffect(() => {
     joinChat(chatId)
-    return () => leaveChat(chatId)
+    return () => {
+      leaveChat(chatId)
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
+    }
   }, [chatId])
 
   useEffect(() => {
     if (!socket) return
-    const onNew = (msg: ChatMessage) => setMessages((prev) => [...prev, msg])
+    const onNew = (msg: ChatMessage) => {
+      setMessages((prev) => [...prev, msg])
+      setTypingUsers((prev) => prev.filter((id) => id !== msg.senderId))
+    }
     const onRemove = (msgId: number) => setMessages((prev) => prev.filter((m) => m.id !== msgId))
+    const onTyping = ({ userId }: { userId: number }) => {
+      if (userId === currentUserId) return
+      setTypingUsers((prev) => (prev.includes(userId) ? prev : [...prev, userId]))
+      setTimeout(() => setTypingUsers((prev) => prev.filter((id) => id !== userId)), 3000)
+    }
     socket.on('message:new', onNew)
     socket.on('message:removed', onRemove)
+    socket.on('chat:typing', onTyping)
     return () => {
       socket.off('message:new', onNew)
       socket.off('message:removed', onRemove)
+      socket.off('chat:typing', onTyping)
     }
   }, [socket])
 
@@ -280,6 +295,25 @@ export default function ChatDetail() {
               )
             })}
           </AnimatePresence>
+          {typingUsers.length > 0 && (
+            <div className="flex items-center gap-2 px-1 py-1.5 text-xs text-muted-foreground">
+              <span className="flex gap-0.5">
+                <span
+                  className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce"
+                  style={{ animationDelay: '0ms' }}
+                />
+                <span
+                  className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce"
+                  style={{ animationDelay: '150ms' }}
+                />
+                <span
+                  className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce"
+                  style={{ animationDelay: '300ms' }}
+                />
+              </span>
+              Кто-то печатает...
+            </div>
+          )}
           <div ref={msgEndRef} />
         </div>
       )}
@@ -300,7 +334,12 @@ export default function ChatDetail() {
         <div className="flex items-center gap-1.5">
           <Input
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e) => {
+              setInput(e.target.value)
+              if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
+              sendTyping(chatId)
+              typingTimeoutRef.current = setTimeout(() => {}, 2000)
+            }}
             onKeyDown={(e) => {
               if (e.key === 'Enter') send()
             }}
