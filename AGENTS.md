@@ -32,6 +32,22 @@
 - **Тесты**: предлагать тесты для новой функциональности
 - **Линтер**: перед коммитом проверять `npm run lint` и `npm run type-check`
 
+## Автоматический контроль ошибок
+
+| Этап | Инструмент | Что проверяет |
+|------|-----------|---------------|
+| **При коммите** | Husky → lint-staged | `eslint --fix` + `prettier --write` на изменённых файлах |
+| **В CI (GitHub Actions)** | `tsc --noEmit` | TypeScript strict type-check |
+| | `eslint . --max-warnings 50` | Синтаксис, неисп. переменные, импорты |
+| | `vitest run` | Юнит-тесты (14 клиентских + 17 серверных) |
+| | `vite build` | Сборка production |
+| **Ручной запуск** | `npm run lint` | ESLint (warnings: `no-explicit-any`, `no-unused-vars`) |
+| | `npm run type-check` | `tsc --noEmit` |
+| | `npm test` | Vitest (клиент) |
+| | `cd server && npm test` | Vitest (сервер) |
+| **После каждого изменения** | `node check-console.mjs` | Playwright проверяет 6 страниц (`/`, `/wiki`, `/chats`, `/tickets`, `/employees`, `/search`) на: `errors: []`, `hasRussianText: true` |
+| **Pre-commit hook** | `.husky/pre-commit` | `npx lint-staged` — автофикс и форматирование |
+
 ## Сделано
 
 ### Этап 1 — Базовая настройка
