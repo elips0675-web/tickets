@@ -387,6 +387,14 @@
     "telegramToken": "Telegram Bot Token",
     "telegramChannel": "Telegram Channel",
     "saveSuccess": "Settings saved",
-    "saveError": "Failed to save"
+    "saveError": "Failed to save",
+    "companySettings": "Company",
+    "companyName": "Company Name",
+    "companyLogo": "Logo (URL)",
+    "timezone": "Timezone",
+    "defaultLanguage": "Default Language",
+    "ticketSettings": "Ticket Settings",
+    "autoAssign": "Auto-assign (on/off)",
+    "slaResponseHours": "SLA Response Time (hours)"
   }
 }

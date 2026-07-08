@@ -386,6 +386,14 @@
     "telegramToken": "Telegram Bot Token",
     "telegramChannel": "Telegram Channel",
     "saveSuccess": "Настройки сохранены",
-    "saveError": "Ошибка сохранения"
+    "saveError": "Ошибка сохранения",
+    "companySettings": "Компания",
+    "companyName": "Название компании",
+    "companyLogo": "Логотип (URL)",
+    "timezone": "Часовой пояс",
+    "defaultLanguage": "Язык по умолчанию",
+    "ticketSettings": "Настройки тикетов",
+    "autoAssign": "Авто-назначение (on/off)",
+    "slaResponseHours": "SLA время ответа (часы)"
   }
 }

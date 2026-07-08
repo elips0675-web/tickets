@@ -5,7 +5,11 @@ import { authenticateToken, requireRole } from '../middleware.js'
 const router = Router()
 router.use(authenticateToken, requireRole('admin'))
 
-const ALLOWED_SETTINGS = ['TELEGRAM_BOT_TOKEN', 'SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'SMTP_FROM', 'SMTP_SECURE']
+const ALLOWED_SETTINGS = [
+  'TELEGRAM_BOT_TOKEN', 'SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'SMTP_FROM', 'SMTP_SECURE',
+  'COMPANY_NAME', 'COMPANY_LOGO', 'TIMEZONE', 'DEFAULT_LANGUAGE',
+  'AUTO_ASSIGN', 'SLA_RESPONSE_HOURS',
+]
 
 router.get('/settings', async (req, res) => {
   try {

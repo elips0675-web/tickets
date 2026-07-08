@@ -10,6 +10,12 @@ import { Save, Loader2, Eye, EyeOff } from 'lucide-react'
 import { API_URL } from '@/lib/api'
 
 const FIELDS = [
+  { key: 'COMPANY_NAME', label: 'companyName', type: 'text', section: 'companySettings' },
+  { key: 'COMPANY_LOGO', label: 'companyLogo', type: 'text', section: 'companySettings' },
+  { key: 'TIMEZONE', label: 'timezone', type: 'text', section: 'companySettings' },
+  { key: 'DEFAULT_LANGUAGE', label: 'defaultLanguage', type: 'text', section: 'companySettings' },
+  { key: 'AUTO_ASSIGN', label: 'autoAssign', type: 'text', section: 'ticketSettings' },
+  { key: 'SLA_RESPONSE_HOURS', label: 'slaResponseHours', type: 'text', section: 'ticketSettings' },
   { key: 'TELEGRAM_BOT_TOKEN', label: 'telegramToken', type: 'password', section: 'telegramSettings' },
   { key: 'SMTP_HOST', label: 'smtpHost', type: 'text', section: 'emailSettings' },
   { key: 'SMTP_PORT', label: 'smtpPort', type: 'text', section: 'emailSettings' },
