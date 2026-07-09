@@ -133,6 +133,11 @@
     • Транзакции переписаны на knex.transaction() (polls.js)
     • mysql2/promise pool удалён (больше не используется напрямую)
 
+  ✅ Логирование (Winston)
+    • Уровни error/warn/info/debug
+    • Транспорты: console + error.log + combined.log (ротация 10MB, 5 файлов)
+    • requestId middleware (UUID + X-Request-Id)
+
   ✅ CI/CD (GitHub Actions)
     • Линтинг, typecheck, сборка, серверные тесты
 
@@ -289,35 +294,20 @@
     ✅ Docker + docker-compose: mysql + api + frontend
     ✅ Миграции БД: knex
     ✅ CI/CD: GitHub Actions
-    ✅ Тесты: 43 клиентских (MSW) + 17 серверных + E2E (4 файла)
+    ✅ Тесты: 47 клиентских (14 файлов, MSW) + 17 серверных + E2E (4 файла)
     ✅ Покрытие: v8 с порогами
     ✅ Knex: все 13 роутов + socket/audit/settings на knex.raw()
     ✅ LDAP/AD: ldapjs, auto-provisioning, админка
 
-  🟡 Логирование: console.error без winston/pino
-  🟡 Multer: fileFilter по MIME-типам
+  ✅ Логирование: Winston (error/warn/info/debug, console + error.log + combined.log)
+  ✅ Multer: fileFilter по MIME-типам + file-type (magic bytes)
+  ✅ dev-login: отключён вне production (404)
 
   ────────────────────────────────────────────────────────────────────────────
 
   ПЛАН ДОРАБОТКИ ПО ЭТАПАМ
 
-  ✅ Все 20 этапов выполнены.
-
-  Этап 21 — Харденинг безопасности (P2)
-    • Multer: fileFilter по MIME-типам для files/wiki/tickets (запрет .exe/.js/.html)
-    • Multer: проверка сигнатур файлов (magic bytes) через file-type
-    • dev-login: выключен везде кроме development (уже есть, добавить NODE_ENV=development)
-
-  Этап 22 — Логирование и мониторинг (P3)
-    • Winston или pino вместо console.error
-    • Уровни: error/warn/info/debug
-    • Транспорты: console + файл (error.log, combined.log)
-    • requestId через middleware для трейсинга запросов
-
-  Этап 23 — Качество кода (P3)
-    • Единый API-интерцептор: централизованный fetch-перехватчик (уже частично есть в api.ts, расширить на все страницы)
-    • Фикс серверного теста "rejects requests with invalid token" (ESM/dotenv)
-    • Доведение coverage до 80%
+  ✅ Все 23 этапа выполнены. Проект готов к эксплуатации.
 
 ────────────────────────────────────────────────────────────────────────────
 
