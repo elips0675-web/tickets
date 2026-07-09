@@ -10,7 +10,7 @@ import { Separator } from '@/components/ui/separator'
 import type { WikiArticle } from '@/types'
 import { useAuth } from '@/context/AuthContext'
 import { useTranslation } from 'react-i18next'
-import { API_URL } from '@/lib/api'
+import { api } from '@/lib/api'
 
 function mapArticle(raw: any): WikiArticle {
   return {
@@ -29,7 +29,7 @@ function mapArticle(raw: any): WikiArticle {
 const CATEGORIES = ['Все', 'Руководство', 'Правила', 'Инструкции', 'FAQ', 'Интеграции']
 
 export default function WikiPage() {
-  const { canManage, token } = useAuth()
+  const { canManage } = useAuth()
   const { t } = useTranslation()
   const [articles, setArticles] = useState<WikiArticle[]>([])
   const [loading, setLoading] = useState(true)
@@ -51,31 +51,21 @@ export default function WikiPage() {
     const form = new FormData()
     form.append('image', file)
     try {
-      const res = await fetch(`${API_URL}/wiki/upload-image`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: form,
-      })
-      if (res.ok) {
-        const { url } = await res.json()
-        setNewContent((prev) => prev + `\n\n![${file.name}](${url})\n`)
-      }
-    } catch {
-      /* ignore */
-    }
+      const { url } = await api.post('/wiki/upload-image', form)
+      setNewContent((prev) => prev + `\n\n![${file.name}](${url})\n`)
+    } catch { /* toast handled by api client */ }
     setUploadingImg(false)
     if (imageInputRef.current) imageInputRef.current.value = ''
   }
 
   useEffect(() => {
-    fetch(`${API_URL}/wiki`, { headers: { Authorization: `Bearer ${token}` } })
-      .then((res) => (res.ok ? res.json() : []))
+    api.get('/wiki')
       .then((data) => {
-        setArticles(data.map(mapArticle))
+        setArticles((data || []).map(mapArticle))
         setLoading(false)
       })
       .catch(() => setLoading(false))
-  }, [token])
+  }, [])
 
   const filtered = useMemo(() => {
     let items = articles
@@ -93,27 +83,15 @@ export default function WikiPage() {
   const handleCreate = async () => {
     if (!newTitle.trim() || !newContent.trim()) return
     try {
-      const res = await fetch(`${API_URL}/wiki`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          title: newTitle,
-          content: newContent,
-          category: newCategory,
-          tags: newTags
-            .split(',')
-            .map((t) => t.trim())
-            .filter(Boolean),
-        }),
-      })
-      if (res.ok) {
-        const created = mapArticle(await res.json())
-        setArticles((prev) => [created, ...prev])
-        setArticle(created)
-      }
-    } catch {
-      /* ignore */
-    }
+      const created = mapArticle(await api.post('/wiki', {
+        title: newTitle,
+        content: newContent,
+        category: newCategory,
+        tags: newTags.split(',').map((t) => t.trim()).filter(Boolean),
+      }))
+      setArticles((prev) => [created, ...prev])
+      setArticle(created)
+    } catch { /* toast handled by api client */ }
     setOpen(false)
     setNewTitle('')
     setNewContent('')

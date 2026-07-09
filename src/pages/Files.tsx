@@ -6,13 +6,11 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Search, Grid3X3, List, FileText, Image, FileCode, File, Folder, Loader2, Upload, X } from 'lucide-react'
 import type { FileItem, FileFolder } from '@/types'
-import { useAuth } from '@/context/AuthContext'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { API_URL } from '@/lib/api'
+import { api, API_URL } from '@/lib/api'
 
 export default function FilesPage() {
-  const { token } = useAuth()
   const { t } = useTranslation()
   const CATEGORIES = [
     { key: 'all', label: t('files.catAll'), icon: Folder },
@@ -33,10 +31,9 @@ export default function FilesPage() {
   const dragCounter = useRef(0)
 
   const fetchFolders = useCallback(() => {
-    fetch(`${API_URL}/files/folders`, { headers: { Authorization: `Bearer ${token}` } })
-      .then((res) => (res.ok ? res.json() : []))
+    api.get('/files/folders')
       .then((data) => {
-        const mapped = data.map((f: any) => ({
+        const mapped = (data || []).map((f: any) => ({
           id: f.id,
           name: f.name,
           files: (f.files || []).map((file: any) => ({
@@ -54,7 +51,7 @@ export default function FilesPage() {
         setLoading(false)
       })
       .catch(() => setLoading(false))
-  }, [token, activeFolder])
+  }, [activeFolder])
 
   useEffect(() => {
     fetchFolders()
@@ -66,17 +63,9 @@ export default function FilesPage() {
       const fd = new FormData()
       fd.append('file', file)
       if (activeFolder) fd.append('folderId', String(activeFolder))
-      const res = await fetch(`${API_URL}/files/upload`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: fd,
-      })
-      if (res.ok) {
-        toast.success(t('files.uploadSuccess', { name: file.name }))
-        fetchFolders()
-      } else {
-        toast.error(t('files.uploadError'))
-      }
+      await api.post('/files/upload', fd)
+      toast.success(t('files.uploadSuccess', { name: file.name }))
+      fetchFolders()
     } catch {
       toast.error(t('files.uploadError'))
     }

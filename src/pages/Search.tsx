@@ -14,9 +14,8 @@ import {
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { useAuth } from '@/context/AuthContext'
 import { cn } from '@/lib/utils'
-import { API_URL } from '@/lib/api'
+import { api } from '@/lib/api'
 
 interface SearchResult {
   tickets: any[]
@@ -41,7 +40,6 @@ export default function SearchPage() {
   const [searched, setSearched] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()
-  const { token } = useAuth()
   const timerRef = useRef<ReturnType<typeof setTimeout>>()
 
   useEffect(() => {
@@ -59,13 +57,9 @@ export default function SearchPage() {
     timerRef.current = setTimeout(async () => {
       setLoading(true)
       try {
-        const res = await fetch(`${API_URL}/search?q=${encodeURIComponent(q)}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        if (res.ok) setResults(await res.json())
-      } catch {
-        // ignore
-      } finally {
+        const data = await api.get(`/search?q=${encodeURIComponent(q)}`)
+        setResults(data || { tickets: [], employees: [], wiki: [], news: [], chats: [], files: [] })
+      } catch { /* toast handled by api client */ } finally {
         setLoading(false)
         setSearched(true)
       }

@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Search, Newspaper, Plus, Clock, User, AlertTriangle, Pin, Loader2, Download, ImageIcon } from 'lucide-react'
 import type { NewsPost } from '@/types'
 import { useAuth } from '@/context/AuthContext'
-import { API_URL } from '@/lib/api'
+import { api } from '@/lib/api'
 
 function mapNews(raw: any): NewsPost {
   return {
@@ -26,7 +26,7 @@ const PER_PAGE = 6
 
 export default function NewsPage() {
   const { t } = useTranslation()
-  const { canManage, token } = useAuth()
+  const { canManage } = useAuth()
   const [news, setNews] = useState<NewsPost[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -47,18 +47,9 @@ export default function NewsPage() {
     const form = new FormData()
     form.append('image', file)
     try {
-      const res = await fetch(`${API_URL}/wiki/upload-image`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: form,
-      })
-      if (res.ok) {
-        const { url } = await res.json()
-        setNewContent((prev) => prev + `\n\n![${file.name}](${url})\n`)
-      }
-    } catch {
-      /* ignore */
-    }
+      const { url } = await api.post('/wiki/upload-image', form)
+      setNewContent((prev) => prev + `\n\n![${file.name}](${url})\n`)
+    } catch { /* toast handled by api client */ }
     setUploadingImg(false)
     if (imageInputRef.current) imageInputRef.current.value = ''
   }
@@ -67,15 +58,14 @@ export default function NewsPage() {
     const params = new URLSearchParams({ page: String(page), limit: String(PER_PAGE) })
     if (showImportant) params.set('important', 'true')
     if (search.trim()) params.set('q', search.trim())
-    fetch(`${API_URL}/news?${params}`, { headers: { Authorization: `Bearer ${token}` } })
-      .then((res) => (res.ok ? res.json() : { data: [], total: 0, totalPages: 1 }))
+    api.get(`/news?${params}`)
       .then(({ data, total, totalPages: tp }) => {
-        setNews(data.map(mapNews))
+        setNews((data || []).map(mapNews))
         setTotalPages(tp || Math.ceil((total || 0) / PER_PAGE))
         setLoading(false)
       })
       .catch(() => setLoading(false))
-  }, [token, page, search, showImportant])
+  }, [page, search, showImportant])
 
   const paged = news
   const resetPage = () => setPage(1)
@@ -104,18 +94,9 @@ export default function NewsPage() {
   const handleCreate = async () => {
     if (!newTitle.trim() || !newContent.trim()) return
     try {
-      const res = await fetch(`${API_URL}/news`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ title: newTitle, content: newContent, important: newImportant }),
-      })
-      if (res.ok) {
-        const post = mapNews(await res.json())
-        setNews((prev) => [post, ...prev])
-      }
-    } catch {
-      /* ignore */
-    }
+      const post = mapNews(await api.post('/news', { title: newTitle, content: newContent, important: newImportant }))
+      setNews((prev) => [post, ...prev])
+    } catch { /* toast handled by api client */ }
     setOpen(false)
     setNewTitle('')
     setNewContent('')

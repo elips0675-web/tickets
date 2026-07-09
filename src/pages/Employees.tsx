@@ -27,7 +27,7 @@ import {
 import { toast } from 'sonner'
 import { useTickets } from '@/context/ticket-context'
 import { useAuth } from '@/context/AuthContext'
-import { API_URL } from '@/lib/api'
+import { api } from '@/lib/api'
 import type { Employee } from '@/types'
 
 const roleIcons: Record<string, any> = {
@@ -55,19 +55,9 @@ export default function Employees() {
 
   const openChat = async (userId: number) => {
     try {
-      const res = await fetch(`${API_URL}/chats/personal/${userId}`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) {
-        toast.error(t('chats.errorCreate'))
-        return
-      }
-      const chat = await res.json()
+      const chat = await api.post(`/chats/personal/${userId}`)
       navigate(`/chats/${chat.id}`)
-    } catch {
-      toast.error(t('common.error'))
-    }
+    } catch { /* toast handled by api client */ }
   }
 
   const roleLabels: Record<string, string> = {

@@ -2,10 +2,9 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { useAuth } from '@/context/AuthContext'
 import { Search, Loader2, Clock, User } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { API_URL } from '@/lib/api'
+import { api } from '@/lib/api'
 
 const ACTION_COLORS: Record<string, string> = {
   created: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
@@ -16,20 +15,18 @@ const ACTION_COLORS: Record<string, string> = {
 
 export default function AdminAudit() {
   const { t } = useTranslation()
-  const { token } = useAuth()
   const [logs, setLogs] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
 
   useEffect(() => {
-    fetch(`${API_URL}/admin/audit`, { headers: { Authorization: `Bearer ${token}` } })
-      .then((res) => (res.ok ? res.json() : []))
+    api.get('/admin/audit')
       .then((data) => {
-        setLogs(data)
+        setLogs(data || [])
         setLoading(false)
       })
       .catch(() => setLoading(false))
-  }, [token])
+  }, [])
 
   const actionLabel = (action: string) => {
     const map: Record<string, string> = {

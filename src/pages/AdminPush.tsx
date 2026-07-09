@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Bell, Send } from 'lucide-react'
 import { usePush } from '@/lib/use-push'
+import { api } from '@/lib/api'
 
 export default function AdminPush() {
   const { t } = useTranslation()
@@ -20,25 +21,15 @@ export default function AdminPush() {
     if (!pushTitle.trim()) return
     setSending(true)
     setSendResult(null)
-    const token = localStorage.getItem('token')
     try {
-      const res = await fetch('/api/push/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ title: pushTitle, body: pushBody, url: pushUrl }),
-      })
-      if (res.ok) {
-        const result = await res.json()
-        setSendResult(result)
-        if (result.sent > 0) {
-          setPushTitle('')
-          setPushBody('')
-          setPushUrl('/')
-        }
+      const result = await api.post('/push/send', { title: pushTitle, body: pushBody, url: pushUrl })
+      setSendResult(result)
+      if (result.sent > 0) {
+        setPushTitle('')
+        setPushBody('')
+        setPushUrl('/')
       }
-    } catch {
-      // ignore
-    }
+    } catch { /* toast handled by api client */ }
     setSending(false)
   }
 

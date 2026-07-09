@@ -9,64 +9,45 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Plus, BarChart3, CheckCheck, Loader2, X } from 'lucide-react'
 import type { Poll } from '@/types'
 import { useAuth } from '@/context/AuthContext'
-import { API_URL } from '@/lib/api'
+import { api } from '@/lib/api'
 
 export default function PollsPage() {
   const { t } = useTranslation()
-  const { canManage, token } = useAuth()
+  const { canManage } = useAuth()
   const [polls, setPolls] = useState<Poll[]>([])
   const [loading, setLoading] = useState(true)
   const [showNew, setShowNew] = useState(false)
   const [form, setForm] = useState({ title: '', description: '', options: ['', ''], multipleChoice: false })
 
   useEffect(() => {
-    fetch(`${API_URL}/polls`, { headers: { Authorization: `Bearer ${token}` } })
-      .then((res) => (res.ok ? res.json() : []))
+    api.get('/polls')
       .then((data) => {
         setPolls(data.data ?? data)
         setLoading(false)
       })
       .catch(() => setLoading(false))
-  }, [token])
+  }, [])
 
   const createPoll = async () => {
     if (!form.title.trim() || form.options.filter((o) => o.trim()).length < 2) return
     try {
-      const res = await fetch(`${API_URL}/polls`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          title: form.title,
-          description: form.description,
-          options: form.options.filter((o) => o.trim()),
-          multipleChoice: form.multipleChoice,
-        }),
+      const poll = await api.post('/polls', {
+        title: form.title,
+        description: form.description,
+        options: form.options.filter((o) => o.trim()),
+        multipleChoice: form.multipleChoice,
       })
-      if (res.ok) {
-        const poll = await res.json()
-        setPolls((prev) => [poll, ...prev])
-      }
-    } catch {
-      /* ignore */
-    }
+      setPolls((prev) => [poll, ...prev])
+    } catch { /* toast handled by api client */ }
     setShowNew(false)
     setForm({ title: '', description: '', options: ['', ''], multipleChoice: false })
   }
 
   const vote = async (pollId: number, optionId: number) => {
     try {
-      const res = await fetch(`${API_URL}/polls/${pollId}/vote`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ optionId }),
-      })
-      if (res.ok) {
-        const updated = await res.json()
-        setPolls((prev) => prev.map((p) => (p.id === pollId ? updated : p)))
-      }
-    } catch {
-      /* ignore */
-    }
+      const updated = await api.post(`/polls/${pollId}/vote`, { optionId })
+      setPolls((prev) => prev.map((p) => (p.id === pollId ? updated : p)))
+    } catch { /* toast handled by api client */ }
   }
 
   const calcPct = (votes: number, total: number) => (total > 0 ? Math.round((votes / total) * 100) : 0)

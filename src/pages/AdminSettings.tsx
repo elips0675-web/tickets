@@ -3,11 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import { useAuth } from '@/context/AuthContext'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import { Save, Loader2, Eye, EyeOff } from 'lucide-react'
-import { API_URL } from '@/lib/api'
+import { api } from '@/lib/api'
 
 const FIELDS = [
   { key: 'COMPANY_NAME', label: 'companyName', type: 'text', section: 'companySettings' },
@@ -27,35 +26,26 @@ const FIELDS = [
 
 export default function AdminSettings() {
   const { t } = useTranslation()
-  const { token } = useAuth()
   const [values, setValues] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [show, setShow] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
-    fetch(`${API_URL}/admin/settings`, { headers: { Authorization: `Bearer ${token}` } })
-      .then((res) => (res.ok ? res.json() : {}))
+    api.get('/admin/settings')
       .then((data) => {
-        setValues(data)
+        setValues(data || {})
         setLoading(false)
       })
       .catch(() => setLoading(false))
-  }, [token])
+  }, [])
 
   const save = async () => {
     setSaving(true)
     try {
-      const res = await fetch(`${API_URL}/admin/settings`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(values),
-      })
-      if (res.ok) toast.success(t('admin.saveSuccess'))
-      else toast.error(t('admin.saveError'), { role: 'alert' })
-    } catch {
-      toast.error(t('common.loading'), { role: 'alert' })
-    }
+      await api.put('/admin/settings', values)
+      toast.success(t('admin.saveSuccess'))
+    } catch { /* toast handled by api client */ }
     setSaving(false)
   }
 
