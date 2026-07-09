@@ -395,6 +395,11 @@
     "defaultLanguage": "Язык по умолчанию",
     "ticketSettings": "Настройки тикетов",
     "autoAssign": "Авто-назначение (on/off)",
-    "slaResponseHours": "SLA время ответа (часы)"
+    "slaResponseHours": "SLA время ответа (часы)",
+    "ldapSettings": "LDAP / AD",
+    "ldapUrl": "LDAP URL (ldap://host:389)",
+    "ldapBaseDn": "Base DN (dc=company,dc=ru)",
+    "ldapBindDn": "Bind DN (опционально)",
+    "ldapBindCredentials": "Bind Password"
   }
 }

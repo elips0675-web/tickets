@@ -61,7 +61,7 @@ export default function WikiPage() {
   useEffect(() => {
     api.get('/wiki')
       .then((data) => {
-        setArticles((data || []).map(mapArticle))
+        setArticles((data?.data || data || []).map(mapArticle))
         setLoading(false)
       })
       .catch(() => setLoading(false))

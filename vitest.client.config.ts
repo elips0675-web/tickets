@@ -8,6 +8,24 @@ export default defineConfig({
     include: ['src/test/**/*.test.{ts,tsx}'],
     setupFiles: ['src/test/setup.ts'],
     css: false,
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'lcov'],
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: [
+        'src/test/**',
+        'src/mocks/**',
+        'src/**/*.d.ts',
+        'src/main.tsx',
+        'src/vite-env.d.ts',
+      ],
+      thresholds: {
+        statements: 20,
+        branches: 15,
+        functions: 15,
+        lines: 25,
+      },
+    },
   },
   resolve: {
     alias: {

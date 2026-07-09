@@ -22,6 +22,10 @@ const FIELDS = [
   { key: 'SMTP_USER', label: 'smtpUser', type: 'text', section: 'emailSettings' },
   { key: 'SMTP_PASS', label: 'smtpPass', type: 'password', section: 'emailSettings' },
   { key: 'SMTP_FROM', label: 'smtpFrom', type: 'text', section: 'emailSettings' },
+  { key: 'LDAP_URL', label: 'ldapUrl', type: 'text', section: 'ldapSettings' },
+  { key: 'LDAP_BASE_DN', label: 'ldapBaseDn', type: 'text', section: 'ldapSettings' },
+  { key: 'LDAP_BIND_DN', label: 'ldapBindDn', type: 'text', section: 'ldapSettings' },
+  { key: 'LDAP_BIND_CREDENTIALS', label: 'ldapBindCredentials', type: 'password', section: 'ldapSettings' },
 ]
 
 export default function AdminSettings() {

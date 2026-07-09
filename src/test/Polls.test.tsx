@@ -24,11 +24,10 @@ vi.mock('react-i18next', () => ({
   }),
 }))
 
-vi.mock('@/context/AuthContext', () => ({
-  useAuth: () => ({
-    canManage: true,
-  }),
-}))
+beforeEach(() => {
+  localStorage.setItem('token', 'test-token')
+  localStorage.setItem('user', JSON.stringify({ id: 1, name: 'Admin', email: 'admin@test.com', role: 'admin' }))
+})
 
 describe('Polls', () => {
   it('renders polls title', () => {

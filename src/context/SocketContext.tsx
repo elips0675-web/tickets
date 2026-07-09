@@ -13,7 +13,7 @@ interface SocketContextType {
   sendTyping: (chatId: number) => void
 }
 
-const SocketContext = createContext<SocketContextType | null>(null)
+export const SocketContext = createContext<SocketContextType | null>(null)
 
 export function SocketProvider({ children }: { children: ReactNode }) {
   const { token } = useAuth()

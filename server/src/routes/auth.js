@@ -7,6 +7,7 @@ import knex from '../db.js'
 import { JWT_SECRET, authenticateToken, requireRole } from '../middleware.js'
 import { sendTicketNotification } from '../email.js'
 import { loginValidation, registerValidation, handleErrors } from '../validate.js'
+import { authenticateLDAP } from '../auth/ldap.js'
 
 const router = Router()
 
@@ -65,6 +66,8 @@ router.post('/register', authenticateToken, requireRole('admin'), registerValida
 })
 
 // Dev auto-login (only in non-production)
+router.post('/ldap-login', authenticateLDAP)
+
 router.post('/dev-login', (req, res) => {
   if (process.env.NODE_ENV === 'production') {
     return res.status(404).json({ message: 'Not found' })

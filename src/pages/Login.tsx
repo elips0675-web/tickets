@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useForm } from 'react-hook-form'
@@ -21,6 +21,7 @@ export default function Login() {
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   })
+  const [ldapLoading, setLdapLoading] = useState(false)
 
   useEffect(() => {
     if (localStorage.getItem('token')) navigate('/', { replace: true })
@@ -43,6 +44,25 @@ export default function Login() {
     } catch {
       setError('root', { message: t('auth.connectionError') })
     }
+  }
+
+  const ldapLogin = async (data: LoginFormData) => {
+    setLdapLoading(true)
+    try {
+      const res = await fetch('/api/auth/ldap-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: data.email, password: data.password }),
+      })
+      const json = await res.json()
+      if (res.ok) {
+        login(json.token, json.employee)
+        navigate('/', { replace: true })
+        return
+      }
+      setError('root', { message: json.message || t('auth.loginError') })
+    } catch { setError('root', { message: t('auth.connectionError') }) }
+    setLdapLoading(false)
   }
 
   const devLogin = async () => {
@@ -108,12 +128,15 @@ export default function Login() {
             </Button>
           </form>
 
-          <div className="mt-4 pt-4 border-t">
+          <div className="mt-4 pt-4 border-t space-y-2">
             <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider text-center mb-2">
               {t('auth.quickLogin')}
             </p>
             <Button variant="outline" size="sm" className="w-full" onClick={devLogin}>
               {t('auth.loginAsAdmin')}
+            </Button>
+            <Button variant="outline" size="sm" className="w-full" onClick={handleSubmit(ldapLogin)} disabled={ldapLoading}>
+              {ldapLoading ? t('auth.loggingIn') : 'LDAP / AD'}
             </Button>
           </div>
 

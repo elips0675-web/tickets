@@ -80,7 +80,7 @@ export default function FilesPage() {
       const files = Array.from(e.dataTransfer.files)
       files.forEach(uploadFile)
     },
-    [activeFolder, token],
+    [activeFolder],
   )
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -131,7 +131,7 @@ export default function FilesPage() {
       </div>
 
       {dragging && (
-        <div className="fixed inset-0 z-50 bg-primary/10 flex items-center justify-center pointer-events-none">
+        <div className="fixed inset-0 z-50 bg-primary/10 flex items-center justify-center pointer-events-none" role="status" aria-live="polite">
           <div className="bg-background border-2 border-dashed border-primary rounded-2xl p-12 text-center">
             <Upload className="w-12 h-12 mx-auto mb-3 text-primary" />
             <p className="font-bold text-lg">Отпустите файлы для загрузки</p>
@@ -145,6 +145,7 @@ export default function FilesPage() {
           onClick={() => fileInputRef.current?.click()}
           role="button"
           tabIndex={0}
+          aria-label={t('files.dropzone')}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault()
@@ -266,6 +267,25 @@ export default function FilesPage() {
                   <div
                     key={f.id}
                     className="flex items-center gap-3 p-3 hover:bg-muted/50 rounded-lg cursor-pointer transition-colors"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => {
+                      if (f.path)
+                        window.open(
+                          `${API_URL.replace('/api', '')}${f.path}?token=${localStorage.getItem('token')}`,
+                          '_blank',
+                        )
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        if (f.path)
+                          window.open(
+                            `${API_URL.replace('/api', '')}${f.path}?token=${localStorage.getItem('token')}`,
+                            '_blank',
+                          )
+                      }
+                    }}
                   >
                     <span className="text-2xl w-8 text-center">{'🖼️📄📝💻🗜️'.includes(f.type) ? f.type : '📁'}</span>
                     <div className="flex-1 min-w-0">

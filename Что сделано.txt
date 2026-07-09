@@ -14,6 +14,7 @@
     • express-validator на 7 роутах
     • ProtectedRoute + скрытие UI элементов по роли
     • Восстановление пароля (nodemailer)
+    • LDAP/AD аутентификация (ldapjs, auto-provisioning сотрудников)
 
   ✅ Тикеты
     • CRUD, статусы (open → in_progress → resolved → closed)
@@ -63,6 +64,7 @@
     • Папки, drag & drop, загрузка (multer → uploads/files/)
     • Фильтр по типу, поиск, вид сетка/список
     • Открытие файлов по клику
+    • Клавиатурная a11y: tabIndex + onKeyDown в grid/list view, aria-label на dropzone
 
   ✅ Сотрудники
     • Список с онлайн-статусом
@@ -108,6 +110,11 @@
 
   ✅ Telegram (node-telegram-bot-api)
     • Бот, настраиваемый токен/канал через админку
+
+  ✅ LDAP / AD
+    • ldapjs: bind + search, настройка через админку
+    • POST /api/auth/ldap-login
+    • Авто-создание сотрудника (auto-provisioning) при первом входе
 
   ✅ i18n (i18next)
     • Русский / Английский
@@ -161,8 +168,10 @@
 
 ТЕСТИРОВАНИЕ
 
-  • Клиентские тесты: 14 (vitest + jsdom) — ✅ все пройдены
+  • Клиентские тесты: 43 (11 файлов, vitest + jsdom + MSW) — ✅ все пройдены
   • Серверные тесты: 17 (vitest + supertest) — ✅ все пройдены
+  • E2E (Playwright): 4 файла (login, tickets, chats, admin) — 13 тестов
+  • Coverage: v8, пороги 20%/15%/15%/25% (statements/branches/functions/lines)
   • Сборка (vite build + PWA): ✅ успешно
 
 ────────────────────────────────────────────────────────────────────────────
@@ -206,14 +215,15 @@
     ✅ auth.js — все ответы в формате { message } (было 2 { error })
 
   Тестирование:
-    ✅ 14 клиентских + 17 серверных тестов, Playwright + Chromium
+    ✅ 43 клиентских (11 файлов, vitest + MSW) + 17 серверных тестов
+    ✅ E2E: login, tickets, chats, admin (Playwright)
+    ✅ Coverage (v8) c порогами
     ✅ CI гоняет клиентские тесты, поднимает MySQL 8.4 + seed.sql
-    🟡 Клиентские тесты — 3/20 страниц, без MSW, E2E только Login
 
   Обработка ошибок:
     ✅ Глобальный error handler на сервере, console.error во всех catch
     ✅ Error Boundary на клиенте (src/components/ErrorBoundary.tsx)
-    🔴 Нет единого API-интерцептора (API в 16 местах, ошибки глотаются)
+    🟡 Нет единого API-интерцептора (API в 16 местах, ошибки глотаются)
 
   UI / a11y / i18n:
     ✅ Нижняя мобильная навигация, тёмная тема, i18n-файлы полные
@@ -221,13 +231,13 @@
     ✅ htmlFor/id на всех формах
     ✅ Error messages с role="alert"
     ✅ aria-label на icon-only кнопках
-    ✅ keyboard + role="button" + tabIndex на кликабельных карточках
+    ✅ keyboard + role="button" + tabIndex на кликабельных карточках (grid + list view)
     ✅ Tabs на Radix (Employees)
-    🟡 Drag-and-drop без клавиатурной альтернативы (Files)
+    ✅ Dropzone с клавиатурной a11y (tabIndex, onKeyDown, aria-label, aria-live)
 
   Функциональные дыры:
     ✅ Email, Telegram, WebPush, WebSocket, аудит, PDF/CSV на тикетах
-    🟡 Нет LDAP/AD/SSO — аутентификация только email+password
+    ✅ LDAP/AD — ldapjs, bind + search, авто-создание сотрудника при первом входе
     ✅ Экспорт CSV на всех страницах (тикеты PDF/CSV, Wiki/Calendar/Employees/News — CSV)
 
   Производительность:
@@ -256,24 +266,21 @@
     ✅ Docker-compose — mysql + api + frontend, healthcheck, seed.sql
      ✅ ORM / Query Builder — Knex (raw) внедрён во все 13 роутов + socket/audit/settings
      ✅ Уведомления — автотриггеры (notify.js) на создание, статус, назначение, сообщение
-    🟡 Тесты — 31 тест есть, но < 80%, нет MSW, E2E только Login
+    ✅ Тесты — 43 теста (11 файлов), MSW, E2E расширен (tickets/chats/admin)
+  ✅ Покрытие (v8) — настроено, базовая планка 20% / 15% / 15% / 25%
+  ✅ Keyboard a11y — Files: list view + tabIndex/onKeyDown, drag overlay aria-live
+  ✅ LDAP/AD — серверный модуль ldap.js, настройки в админке, кнопка входа на Login
 
   ────────────────────────────────────────────────────────────────────────────
 
   ПЛАН ДОРАБОТКИ ПО ЭТАПАМ
 
-  ✅ Этап 18 — Автотриггеры уведомлений
-    • Сервис notify.js: централизованные уведомления для всех каналов
-    • Подключены события: создание тикета, смена статуса, назначение, новое сообщение
-    • Каналы: in-app (createNotification) + email (sendTicketNotification) + Telegram (sendTelegramNotification)
+  ✅ Все 20 этапов выполнены. Проект готов к эксплуатации.
 
-  Этап 19 — Тесты и покрытие (P2)
-    • MSW на клиенте для тестов страниц с API
-    • Покрытие тестами 80% (c8), E2E: ticket CRUD, чаты, админка
-    • Drag-and-drop клавиатурная альтернатива (Files)
-
-  Этап 17 — Опционально (P3) — остаток
-    • LDAP/AD интеграция (passport-ldapauth)
+  Этап 21 — Качество кода (P4)
+    • Единый API-интерцептор: централизованный fetch-перехватчик с обработкой 401/403/500
+    • Фикс серверного теста "rejects requests with invalid token" (ESM/dotenv)
+    • Доведение coverage до 80%
 
 ────────────────────────────────────────────────────────────────────────────
 

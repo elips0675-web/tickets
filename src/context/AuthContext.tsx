@@ -3,8 +3,10 @@ import { createContext, useContext, useState, type ReactNode } from "react"
 function getInitialToken(): string | null {
   const t = localStorage.getItem("token")
   if (!t) return null
+  const parts = t.split('.')
+  if (parts.length !== 3) return t
   try {
-    const payload = JSON.parse(atob(t.split('.')[1]))
+    const payload = JSON.parse(atob(parts[1]))
     if (payload.exp * 1000 < Date.now()) {
       localStorage.removeItem("token")
       localStorage.removeItem("user")

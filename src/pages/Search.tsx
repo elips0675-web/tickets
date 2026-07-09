@@ -67,7 +67,7 @@ export default function SearchPage() {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current)
     }
-  }, [query, token])
+  }, [query])
 
   const total = Object.values(results).reduce((a, b) => a + b.length, 0)
 
