@@ -7,10 +7,11 @@ import knex from '../db.js'
 import { authenticateToken, requireRole } from '../middleware.js'
 import { getIO } from '../socket.js'
 import { invalidateCache } from '../cache.js'
-import { sendTicketNotification } from '../email.js'
-import { sendTelegramNotification } from '../telegram.js'
 import { logAudit } from '../audit.js'
-import { createNotification } from './notifications.js'
+import {
+  notifyTicketCreated, notifyStatusChanged, notifyPriorityChanged,
+  notifyTicketAssigned, notifyTicketMessage,
+} from '../notify.js'
 import { createTicketValidation, updateStatusValidation, updatePriorityValidation, assignTicketValidation, addMessageValidation } from '../validate.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -106,8 +107,7 @@ router.post('/', createTicketValidation, async (req, res) => {
     const [ticket] = await knex.raw('SELECT * FROM tickets WHERE id = ?', [ticketId])
     getIO()?.emit('ticket:created', { ...ticket[0], messages: [] })
     logAudit({ userId: req.user.userId, userName: req.user.name, action: 'created', entityType: 'ticket', entityId: ticketId, details: { title } })
-    createNotification({ userId: req.user.userId, type: 'ticket_created', title: 'Тикет создан', body: title, link: `/tickets/${ticketId}` })
-    sendTelegramNotification(`🆕 Новый тикет #${ticketId}: ${title}\nПриоритет: ${priority || 'medium'}\nКатегория: ${category || 'support'}`)
+    notifyTicketCreated(ticketId, req.user.name)
     invalidateCache('cache:/api/tickets*')
     res.status(201).json(ticket[0])
   } catch (err) {
@@ -124,20 +124,8 @@ router.put('/:id/status', requireRole('admin', 'senior_agent'), updateStatusVali
     if (!old) return res.status(404).json({ message: 'Ticket not found' })
     await knex.raw('UPDATE tickets SET status = ?, updated_at = NOW() WHERE id = ?', [status, req.params.id])
     getIO()?.emit('ticket:updated', { id: Number(req.params.id), status, updatedBy: req.user.userId })
-    const labels = { open: 'Открыт', in_progress: 'В работе', resolved: 'Решён', closed: 'Закрыт' }
     logAudit({ userId: req.user.userId, userName: req.user.name, action: 'status_changed', entityType: 'ticket', entityId: Number(req.params.id), details: { from: old.status, to: status } })
-    sendTelegramNotification(`📋 Статус тикета #${req.params.id} изменён на: ${labels[status] || status}`)
-    const [[ticket]] = await knex.raw(
-      'SELECT t.title, e.email, e.name FROM tickets t JOIN employees e ON t.created_by = e.id WHERE t.id = ?',
-      [req.params.id],
-    )
-    if (ticket?.email) {
-      sendTicketNotification({
-        to: ticket.email,
-        subject: `Статус тикета #${req.params.id} изменён: ${labels[status] || status}`,
-        text: `Тикет "${ticket.title}" (#${req.params.id})\nНовый статус: ${labels[status] || status}\n\nService Desk`,
-      })
-    }
+    notifyStatusChanged(Number(req.params.id), old.status, status, req.user.name)
     invalidateCache('cache:/api/tickets*')
     res.json({ success: true })
   } catch (err) {
@@ -153,6 +141,7 @@ router.put('/:id/priority', requireRole('admin', 'senior_agent'), updatePriority
     await knex.raw('UPDATE tickets SET priority = ?, updated_at = NOW() WHERE id = ?', [priority, req.params.id])
     getIO()?.emit('ticket:updated', { id: Number(req.params.id), priority, updatedBy: req.user.userId })
     logAudit({ userId: req.user.userId, userName: req.user.name, action: 'priority_changed', entityType: 'ticket', entityId: Number(req.params.id), details: { from: old?.priority, to: priority } })
+    notifyPriorityChanged(Number(req.params.id), old?.priority, priority, req.user.name)
     invalidateCache('cache:/api/tickets*')
     res.json({ success: true })
   } catch (err) {
@@ -168,10 +157,7 @@ router.put('/:id/assign', requireRole('admin', 'senior_agent'), assignTicketVali
     await knex.raw('UPDATE tickets SET assigned_to = ?, updated_at = NOW() WHERE id = ?', [employeeId || null, req.params.id])
     getIO()?.emit('ticket:updated', { id: Number(req.params.id), assignedTo: employeeId, updatedBy: req.user.userId })
     logAudit({ userId: req.user.userId, userName: req.user.name, action: 'assigned', entityType: 'ticket', entityId: Number(req.params.id), details: { assignedTo: employeeId || null, assignedName: emp?.name || null } })
-    if (employeeId && employeeId !== req.user.userId) {
-      const [[t]] = await knex.raw('SELECT title FROM tickets WHERE id = ?', [req.params.id])
-      createNotification({ userId: employeeId, type: 'ticket_assigned', title: 'Назначен тикет', body: t?.title, link: `/tickets/${req.params.id}` })
-    }
+    notifyTicketAssigned(Number(req.params.id), employeeId, req.user.name)
     invalidateCache('cache:/api/tickets*')
     res.json({ success: true })
   } catch (err) {
@@ -200,6 +186,7 @@ router.post('/:id/messages', addMessageValidation, async (req, res) => {
     const [msg] = await knex.raw('SELECT * FROM ticket_messages WHERE id = ?', [result.insertId])
     await knex.raw('UPDATE tickets SET updated_at = NOW() WHERE id = ?', [req.params.id])
     getIO()?.emit('ticket:message', { ticketId: Number(req.params.id), message: msg[0] })
+    notifyTicketMessage(Number(req.params.id), req.user.userId, req.user.name, text)
     res.status(201).json(msg[0])
   } catch (err) {
     res.status(500).json({ message: 'Failed to add message' })
