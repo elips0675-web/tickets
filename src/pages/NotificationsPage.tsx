@@ -8,8 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Bell, Search, Trash2, ExternalLink, Loader2 } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
-import { useAuth } from '@/context/AuthContext'
-import { API_URL } from '@/lib/api'
+import { api } from '@/lib/api'
 
 const TYPE_LABELS: Record<string, string> = {
   ticket_created: 'Тикет',
@@ -29,7 +28,6 @@ const TYPE_COLORS: Record<string, string> = {
 
 export default function NotificationsPage() {
   const { t } = useTranslation()
-  const { token } = useAuth()
   const navigate = useNavigate()
   const [notifications, setNotifications] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -38,26 +36,24 @@ export default function NotificationsPage() {
   const [typeFilter, setTypeFilter] = useState('')
 
   useEffect(() => {
-    if (!token) return
     setLoading(true)
-    fetch(`${API_URL}/notifications`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(res => res.ok ? res.json() : [])
-      .then(data => { setNotifications(data); setLoading(false) })
+    api.get('/notifications')
+      .then(data => { setNotifications(data || []); setLoading(false) })
       .catch(() => setLoading(false))
-  }, [token])
+  }, [])
 
   const markRead = async (id: number) => {
-    await fetch(`${API_URL}/notifications/${id}/read`, { method: 'PUT', headers: { Authorization: `Bearer ${token}` } })
+    await api.put(`/notifications/${id}/read`)
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: 1 } : n))
   }
 
   const markAllRead = async () => {
-    await fetch(`${API_URL}/notifications/read-all`, { method: 'PUT', headers: { Authorization: `Bearer ${token}` } })
+    await api.put('/notifications/read-all')
     setNotifications(prev => prev.map(n => ({ ...n, is_read: 1 })))
   }
 
   const clearAll = async () => {
-    await fetch(`${API_URL}/notifications/clear-all`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } })
+    await api.delete('/notifications/clear-all')
     setNotifications([])
   }
 

@@ -5,11 +5,10 @@ import { useAuth } from '@/context/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import { useSocket } from '@/context/SocketContext'
 import { toast } from 'sonner'
-
-const API = 'http://localhost:4000/api'
+import { api } from '@/lib/api'
 
 export default function NotificationBell({ inSidebar }: { inSidebar?: boolean }) {
-  const { token, user } = useAuth()
+  const { user } = useAuth()
   const { socket } = useSocket()
   const navigate = useNavigate()
   const [notifications, setNotifications] = useState<any[]>([])
@@ -18,15 +17,13 @@ export default function NotificationBell({ inSidebar }: { inSidebar?: boolean })
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (!token) return
-    fetch(`${API}/notifications`, { headers: { Authorization: `Bearer ${token}` } })
-      .then((res) => (res.ok ? res.json() : []))
+    api.get('/notifications')
       .then((data) => {
-        setNotifications(data)
+        setNotifications(data || [])
         setLoading(false)
       })
       .catch(() => setLoading(false))
-  }, [token])
+  }, [])
 
   useEffect(() => {
     if (!socket || !user) return
@@ -56,12 +53,12 @@ export default function NotificationBell({ inSidebar }: { inSidebar?: boolean })
   }, [])
 
   const markRead = async (id: number) => {
-    await fetch(`${API}/notifications/${id}/read`, { method: 'PUT', headers: { Authorization: `Bearer ${token}` } })
+    await api.put(`/notifications/${id}/read`)
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, is_read: 1 } : n)))
   }
 
   const markAllRead = async () => {
-    await fetch(`${API}/notifications/read-all`, { method: 'PUT', headers: { Authorization: `Bearer ${token}` } })
+    await api.put('/notifications/read-all')
     setNotifications((prev) => prev.map((n) => ({ ...n, is_read: 1 })))
   }
 

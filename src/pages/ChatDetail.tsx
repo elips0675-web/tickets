@@ -6,8 +6,8 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, Send, Smile, Users, CheckCheck, Trash2, Search, ImagePlus, X, Loader2 } from 'lucide-react'
 import { cn, formatTime } from '@/lib/utils'
-import { API_URL } from '@/lib/api'
-import type { ChatRoom, ChatMessage } from '@/types'
+import { api } from '@/lib/api'
+import type { ChatMessage } from '@/types'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useSocket } from '@/context/SocketContext'
 import { useAuth } from '@/context/AuthContext'
@@ -19,7 +19,7 @@ export default function ChatDetail() {
   const navigate = useNavigate()
   const chatId = Number(id)
   const { sendMessage, deleteMessage, joinChat, leaveChat, socket, sendTyping } = useSocket()
-  const { user, token } = useAuth()
+  const { user } = useAuth()
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [chatInfo, setChatInfo] = useState<{ name: string; type: string }>({ name: 'Чат', type: 'personal' })
   const [loading, setLoading] = useState(true)
@@ -35,10 +35,9 @@ export default function ChatDetail() {
   const msgEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (!token || !chatId) return
+    if (!chatId) return
     setLoading(true)
-    fetch(`${API_URL}/chats/${chatId}`, { headers: { Authorization: `Bearer ${token}` } })
-      .then((res) => (res.ok ? res.json() : null))
+    api.get(`/chats/${chatId}`)
       .then((data) => {
         if (data) {
           setChatInfo({ name: data.name, type: data.type })
@@ -47,7 +46,7 @@ export default function ChatDetail() {
         setLoading(false)
       })
       .catch(() => setLoading(false))
-  }, [token, chatId])
+  }, [chatId])
 
   useEffect(() => {
     joinChat(chatId)

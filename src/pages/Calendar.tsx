@@ -13,7 +13,7 @@ import { ChevronLeft, ChevronRight, Plus, Bell, Clock, Trash2, Download, Pencil 
 import { formatDate } from '@/lib/utils'
 import type { CalendarEvent } from '@/types'
 import { useAuth } from '@/context/AuthContext'
-import { API_URL } from '@/lib/api'
+import { api } from '@/lib/api'
 
 const MONTHS_RU = [
   'Январь',
@@ -30,17 +30,13 @@ const MONTHS_RU = [
   'Декабрь',
 ]
 
-async function fetchCalendar(token: string, year: number, month: number): Promise<CalendarEvent[]> {
-  const res = await fetch(`${API_URL}/calendar?year=${year}&month=${month + 1}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  })
-  if (!res.ok) throw new Error('Failed to fetch events')
-  return res.json()
+async function fetchCalendar(year: number, month: number): Promise<CalendarEvent[]> {
+  return api.get(`/calendar?year=${year}&month=${month + 1}`)
 }
 
 export default function CalendarPage() {
   const { t } = useTranslation()
-  const { canManage, token } = useAuth()
+  const { canManage } = useAuth()
   const queryClient = useQueryClient()
   const [date, setDate] = useState(new Date())
   const [selDay, setSelDay] = useState<number | null>(null)
@@ -53,62 +49,33 @@ export default function CalendarPage() {
 
   const { data: events = [], isLoading } = useQuery({
     queryKey: ['calendar', year, month],
-    queryFn: () => fetchCalendar(token!, year, month),
-    enabled: !!token,
+    queryFn: () => fetchCalendar(year, month),
+    enabled: true,
   })
 
   const addMutation = useMutation({
-    mutationFn: async (body: { title: string; date: string; time: string | null; description: string | null }) => {
-      const res = await fetch(`${API_URL}/calendar`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(body),
-      })
-      if (!res.ok) throw new Error('Failed to create event')
-      return res.json()
-    },
+    mutationFn: (body: { title: string; date: string; time: string | null; description: string | null }) =>
+      api.post('/calendar', body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['calendar'] })
       setForm({ title: '', time: '', description: '' })
       setShowAdd(false)
     },
-    onError: () => toast.error(t('common.error')),
   })
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: number) => {
-      const res = await fetch(`${API_URL}/calendar/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) throw new Error('Failed to delete event')
-    },
+    mutationFn: (id: number) => api.delete(`/calendar/${id}`),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['calendar'] }),
-    onError: () => toast.error(t('common.error')),
   })
 
   const editMutation = useMutation({
-    mutationFn: async (body: {
-      id: number
-      title: string
-      date: string
-      time: string | null
-      description: string | null
-    }) => {
-      const res = await fetch(`${API_URL}/calendar/${body.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(body),
-      })
-      if (!res.ok) throw new Error('Failed to update event')
-      return res.json()
-    },
+    mutationFn: (body: { id: number; title: string; date: string; time: string | null; description: string | null }) =>
+      api.put(`/calendar/${body.id}`, body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['calendar'] })
       setEditingEvent(null)
       setForm({ title: '', time: '', description: '' })
     },
-    onError: () => toast.error(t('common.error')),
   })
 
   const firstDay = new Date(year, month, 1).getDay()
