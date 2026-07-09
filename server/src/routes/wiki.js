@@ -3,7 +3,7 @@ import multer from 'multer'
 import path from 'path'
 import fs from 'fs'
 import { fileURLToPath } from 'url'
-import pool from '../db.js'
+import knex from '../db.js'
 import { authenticateToken, requireRole } from '../middleware.js'
 import { createWikiValidation } from '../validate.js'
 
@@ -28,8 +28,8 @@ router.get('/', async (req, res) => {
   const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 50))
   const offset = (page - 1) * limit
   try {
-    const [[{ total }]] = await pool.query('SELECT COUNT(*) as total FROM wiki_articles')
-    const [rows] = await pool.query(
+    const [[{ total }]] = await knex.raw('SELECT COUNT(*) as total FROM wiki_articles')
+    const [rows] = await knex.raw(
       'SELECT id, title, content, category, tags, author_id, author_name, created_at, updated_at FROM wiki_articles ORDER BY updated_at DESC LIMIT ? OFFSET ?',
       [limit, offset],
     )
@@ -42,7 +42,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const [[article]] = await pool.query('SELECT * FROM wiki_articles WHERE id = ?', [req.params.id])
+    const [[article]] = await knex.raw('SELECT * FROM wiki_articles WHERE id = ?', [req.params.id])
     if (!article) return res.status(404).json({ message: 'Article not found' })
     res.json(article)
   } catch (err) {
@@ -53,11 +53,11 @@ router.get('/:id', async (req, res) => {
 router.post('/', requireRole('admin', 'senior_agent'), createWikiValidation, async (req, res) => {
   const { title, content, category, tags } = req.body
   try {
-    const [result] = await pool.query(
+    const [result] = await knex.raw(
       'INSERT INTO wiki_articles (title, content, category, tags, author_id, author_name) VALUES (?, ?, ?, ?, ?, ?)',
       [title, content, category || 'Другое', JSON.stringify(tags || []), req.user.userId, req.user.name || 'User'],
     )
-    const [[article]] = await pool.query('SELECT * FROM wiki_articles WHERE id = ?', [result.insertId])
+    const [[article]] = await knex.raw('SELECT * FROM wiki_articles WHERE id = ?', [result.insertId])
     res.status(201).json(article)
   } catch (err) {
     console.error('Create article error:', err)

@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import pool from '../db.js'
+import knex from '../db.js'
 import { authenticateToken } from '../middleware.js'
 
 const router = Router()
@@ -12,27 +12,27 @@ router.get('/', async (req, res) => {
   }
   const like = `%${q}%`
   try {
-    const [tickets] = await pool.query(
+    const [tickets] = await knex.raw(
       'SELECT id, title, status, priority, created_at FROM tickets WHERE title LIKE ? OR description LIKE ? ORDER BY updated_at DESC LIMIT 10',
       [like, like],
     )
-    const [employees] = await pool.query(
+    const [employees] = await knex.raw(
       'SELECT id, name, email, department, avatar FROM employees WHERE name LIKE ? OR email LIKE ? OR department LIKE ? LIMIT 10',
       [like, like, like],
     )
-    const [wiki] = await pool.query(
+    const [wiki] = await knex.raw(
       'SELECT id, title, category, created_at FROM wiki_articles WHERE title LIKE ? OR content LIKE ? ORDER BY updated_at DESC LIMIT 10',
       [like, like],
     )
-    const [news] = await pool.query(
+    const [news] = await knex.raw(
       'SELECT id, title, created_at FROM news_posts WHERE title LIKE ? OR content LIKE ? ORDER BY created_at DESC LIMIT 10',
       [like, like],
     )
-    const [chats] = await pool.query(
+    const [chats] = await knex.raw(
       'SELECT id, name, type FROM chat_rooms WHERE name LIKE ? LIMIT 10',
       [like],
     )
-    const [files] = await pool.query(
+    const [files] = await knex.raw(
       'SELECT id, name, size, type, created_at FROM files WHERE name LIKE ? ORDER BY created_at DESC LIMIT 10',
       [like],
     )

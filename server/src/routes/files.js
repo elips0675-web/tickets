@@ -3,7 +3,7 @@ import path from 'path'
 import fs from 'fs'
 import { fileURLToPath } from 'url'
 import multer from 'multer'
-import pool from '../db.js'
+import knex from '../db.js'
 import { authenticateToken } from '../middleware.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -27,17 +27,17 @@ router.get('/folders', async (req, res) => {
   const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 50))
   const offset = (page - 1) * limit
   try {
-    const [folders] = await pool.query(
+    const [folders] = await knex.raw(
       'SELECT * FROM file_folders WHERE user_id = ? OR is_shared = 1 ORDER BY name',
       [req.user.userId],
     )
     for (const f of folders) {
-      const [files] = await pool.query(
+      const [files] = await knex.raw(
         'SELECT id, name, size, type, folder_id as folderId, path, created_at as createdAt FROM files WHERE folder_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?',
         [f.id, limit, offset],
       )
       f.files = files
-      const [[{ total }]] = await pool.query('SELECT COUNT(*) as total FROM files WHERE folder_id = ?', [f.id])
+      const [[{ total }]] = await knex.raw('SELECT COUNT(*) as total FROM files WHERE folder_id = ?', [f.id])
       f.totalFiles = total
     }
     res.json(folders)
@@ -51,11 +51,11 @@ router.post('/folders', async (req, res) => {
   const { name } = req.body
   if (!name) return res.status(400).json({ message: 'Name required' })
   try {
-    const [result] = await pool.query(
+    const [result] = await knex.raw(
       'INSERT INTO file_folders (name, user_id) VALUES (?, ?)',
       [name, req.user.userId],
     )
-    const [[folder]] = await pool.query('SELECT * FROM file_folders WHERE id = ?', [result.insertId])
+    const [[folder]] = await knex.raw('SELECT * FROM file_folders WHERE id = ?', [result.insertId])
     res.status(201).json(folder)
   } catch (err) {
     console.error('Create folder error:', err)
@@ -74,11 +74,11 @@ router.post('/upload', upload.single('file'), async (req, res) => {
     ? (req.file.size / 1024 / 1024).toFixed(1) + ' MB'
     : (req.file.size / 1024).toFixed(req.file.size > 1024 ? 1 : 0) + ' KB'
   try {
-    const [result] = await pool.query(
+    const [result] = await knex.raw(
       'INSERT INTO files (name, size, type, folder_id, path, user_id) VALUES (?, ?, ?, ?, ?, ?)',
       [name, sizeKB, fileType, folderId || null, `/uploads/files/${req.file.filename}`, req.user.userId],
     )
-    const [[file]] = await pool.query(
+    const [[file]] = await knex.raw(
       'SELECT id, name, size, type, folder_id as folderId, path, created_at as createdAt FROM files WHERE id = ?',
       [result.insertId],
     )
@@ -91,7 +91,7 @@ router.post('/upload', upload.single('file'), async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
   try {
-    await pool.query('DELETE FROM files WHERE id = ?', [req.params.id])
+    await knex.raw('DELETE FROM files WHERE id = ?', [req.params.id])
     res.json({ ok: true })
   } catch (err) {
     res.status(500).json({ message: 'Failed to delete file' })

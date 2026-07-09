@@ -1,7 +1,7 @@
 import { Server } from 'socket.io'
 import { createAdapter } from '@socket.io/redis-adapter'
 import jwt from 'jsonwebtoken'
-import pool from './db.js'
+import knex from './db.js'
 import { JWT_SECRET } from './middleware.js'
 
 let io
@@ -75,7 +75,7 @@ export async function setupSocket(server) {
     socket.join(`user:${socket.userId}`)
 
     // Онлайн-статус
-    pool.query('UPDATE employees SET online = 1 WHERE id = ?', [socket.userId])
+    knex.raw('UPDATE employees SET online = 1 WHERE id = ?', [socket.userId])
       .then(() => io.emit('user:status', { userId: socket.userId, online: true }))
       .catch(() => {})
 
@@ -91,16 +91,16 @@ export async function setupSocket(server) {
       if (!text?.trim()) return
       if (!wsRateLimit(socket)) return socket.emit('rate:limited', { event: 'message:send' })
       try {
-        const [user] = await pool.query('SELECT name FROM employees WHERE id = ?', [socket.userId])
+        const [user] = await knex.raw('SELECT name FROM employees WHERE id = ?', [socket.userId])
         const senderName = user[0]?.name || 'User'
-        const [result] = await pool.query(
+        const [result] = await knex.raw(
           'INSERT INTO chat_messages (chat_id, sender_id, sender_name, text) VALUES (?, ?, ?, ?)',
           [chatId, socket.userId, senderName, text],
         )
-        const [[msg]] = await pool.query('SELECT * FROM chat_messages WHERE id = ?', [result.insertId])
+        const [[msg]] = await knex.raw('SELECT * FROM chat_messages WHERE id = ?', [result.insertId])
         io.to(`chat:${chatId}`).emit('message:new', msg)
         // Уведомление участникам чата кроме отправителя
-        const [participants] = await pool.query(
+        const [participants] = await knex.raw(
           'SELECT DISTINCT sender_id FROM chat_messages WHERE chat_id = ? AND sender_id != ?',
           [chatId, socket.userId],
         )
@@ -125,11 +125,11 @@ export async function setupSocket(server) {
 
     socket.on('message:delete', async ({ chatId, msgId }) => {
       try {
-        const [[msg]] = await pool.query('SELECT * FROM chat_messages WHERE id = ?', [msgId])
+        const [[msg]] = await knex.raw('SELECT * FROM chat_messages WHERE id = ?', [msgId])
         if (!msg) return
         const isAdmin = socket.userRole === 'admin' || socket.userRole === 'senior_agent'
         if (!isAdmin && msg.sender_id !== socket.userId) return
-        await pool.query('DELETE FROM chat_messages WHERE id = ?', [msgId])
+        await knex.raw('DELETE FROM chat_messages WHERE id = ?', [msgId])
         io.to(`chat:${chatId}`).emit('message:removed', msgId)
       } catch (err) {
         console.error('WS delete error:', err)
@@ -148,7 +148,7 @@ export async function setupSocket(server) {
 
     socket.on('disconnect', () => {
       console.log(`WS user ${socket.userId} disconnected`)
-      pool.query('UPDATE employees SET online = 0, last_active = NOW() WHERE id = ?', [socket.userId])
+      knex.raw('UPDATE employees SET online = 0, last_active = NOW() WHERE id = ?', [socket.userId])
         .then(() => io.emit('user:status', { userId: socket.userId, online: false }))
         .catch(() => {})
     })

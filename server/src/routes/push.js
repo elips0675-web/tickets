@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import webpush from 'web-push'
-import pool from '../db.js'
+import knex from '../db.js'
 import { authenticateToken, requireRole } from '../middleware.js'
 
 const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY
@@ -21,7 +21,7 @@ router.get('/vapid-key', (req, res) => {
 
 router.get('/subscription', async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT subscription_json FROM push_subscriptions WHERE user_id = ?', [req.user.userId])
+    const [rows] = await knex.raw('SELECT subscription_json FROM push_subscriptions WHERE user_id = ?', [req.user.userId])
     res.json(rows.map(r => JSON.parse(r.subscription_json)))
   } catch (err) {
     console.error('Get subscriptions error:', err)
@@ -33,7 +33,7 @@ router.post('/subscribe', async (req, res) => {
   const { subscription_json } = req.body
   if (!subscription_json) return res.status(400).json({ message: 'Subscription object required' })
   try {
-    await pool.query(
+    await knex.raw(
       'INSERT INTO push_subscriptions (user_id, subscription_json) VALUES (?, ?) ON DUPLICATE KEY UPDATE subscription_json = VALUES(subscription_json)',
       [req.user.userId, JSON.stringify(subscription_json)],
     )
@@ -46,7 +46,7 @@ router.post('/subscribe', async (req, res) => {
 
 router.delete('/unsubscribe', async (req, res) => {
   try {
-    await pool.query('DELETE FROM push_subscriptions WHERE user_id = ?', [req.user.userId])
+    await knex.raw('DELETE FROM push_subscriptions WHERE user_id = ?', [req.user.userId])
     res.json({ ok: true })
   } catch (err) {
     console.error('Unsubscribe error:', err)
@@ -59,7 +59,7 @@ router.post('/send', requireRole('admin', 'senior_agent'), async (req, res) => {
   if (!title) return res.status(400).json({ message: 'Title is required' })
 
   try {
-    const [rows] = await pool.query('SELECT user_id, subscription_json FROM push_subscriptions')
+    const [rows] = await knex.raw('SELECT user_id, subscription_json FROM push_subscriptions')
     if (!rows.length) return res.json({ sent: 0, total: 0 })
 
     const payload = JSON.stringify({ title, body: body || '', url: url || '/', icon: '/icon.svg' })
@@ -72,7 +72,7 @@ router.post('/send', requireRole('admin', 'senior_agent'), async (req, res) => {
         sent++
       } catch (err) {
         if (err.statusCode === 410 || err.statusCode === 404) {
-          await pool.query('DELETE FROM push_subscriptions WHERE user_id = ?', [row.user_id])
+          await knex.raw('DELETE FROM push_subscriptions WHERE user_id = ?', [row.user_id])
         }
         failed++
       }

@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import pool from '../db.js'
+import knex from '../db.js'
 import { authenticateToken } from '../middleware.js'
 
 const router = Router()
@@ -8,7 +8,7 @@ router.use(authenticateToken)
 
 router.get('/', async (req, res) => {
   try {
-    const [rows] = await pool.query(
+    const [rows] = await knex.raw(
       'SELECT id, name, email, role, department, avatar, online, active_tickets as activeTickets, resolved_today as resolvedToday, phone FROM employees WHERE is_active = 1 ORDER BY name',
     )
     res.json(rows)
@@ -20,7 +20,7 @@ router.get('/', async (req, res) => {
 
 router.get('/stats', async (req, res) => {
   try {
-    const [ticketStats] = await pool.query(`
+    const [ticketStats] = await knex.raw(`
       SELECT 
         COUNT(*) as total,
         SUM(status = 'open') as open,

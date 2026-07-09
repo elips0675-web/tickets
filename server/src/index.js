@@ -1,5 +1,5 @@
 import 'dotenv/config'
-import knex from 'knex'
+import knexLib from 'knex'
 import knexConfig from '../knexfile.js'
 import { app, server } from './app.js'
 import { setupSocket } from './socket.js'
@@ -19,21 +19,21 @@ initTelegram()
 // Auto-run migrations on startup
 ;(async () => {
   try {
-    const db = knex(knexConfig)
-    await db.migrate.latest()
+    const migrator = knexLib(knexConfig)
+    await migrator.migrate.latest()
     console.log('Migrations up to date')
-    await db.destroy()
+    await migrator.destroy()
   } catch (e) {
     console.error('Migration error:', e.message)
   }
 })()
 
 // Удаление уведомлений старше 90 дней (каждые 6 часов)
-import pool from './db.js'
+import knex from './db.js'
 
 async function cleanupOldNotifications() {
   try {
-    const [r] = await pool.query("DELETE FROM notifications WHERE created_at < NOW() - INTERVAL 90 DAY")
+    const [r] = await knex.raw("DELETE FROM notifications WHERE created_at < NOW() - INTERVAL 90 DAY")
     if (r.affectedRows > 0) console.log(`Cleaned ${r.affectedRows} old notifications`)
   } catch (e) {
     console.error('Notification cleanup error:', e.message)

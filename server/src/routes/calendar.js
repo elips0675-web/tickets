@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import pool from '../db.js'
+import knex from '../db.js'
 import { authenticateToken, requireRole } from '../middleware.js'
 import { createCalendarValidation, updateCalendarValidation, deleteEventValidation } from '../validate.js'
 
@@ -16,7 +16,7 @@ router.get('/', async (req, res) => {
       params.push(Number(year), Number(month))
     }
     query += ' ORDER BY date, time ASC'
-    const [events] = await pool.query(query, params)
+    const [events] = await knex.raw(query, params)
     res.json(events)
   } catch (err) {
     console.error('Calendar list error:', err)
@@ -27,11 +27,11 @@ router.get('/', async (req, res) => {
 router.post('/', createCalendarValidation, async (req, res) => {
   const { title, date, time, description } = req.body
   try {
-    const [result] = await pool.query(
+    const [result] = await knex.raw(
       'INSERT INTO events (title, date, time, description, creator_id) VALUES (?, ?, ?, ?, ?)',
       [title, date, time || null, description || '', req.user.userId],
     )
-    const [[event]] = await pool.query(
+    const [[event]] = await knex.raw(
       'SELECT id, title, date, time, description, creator_id as creatorId, created_at as createdAt FROM events WHERE id = ?',
       [result.insertId],
     )
@@ -54,11 +54,11 @@ router.post('/', createCalendarValidation, async (req, res) => {
 router.put('/:id', requireRole('admin', 'senior_agent'), updateCalendarValidation, async (req, res) => {
   const { title, date, time, description } = req.body
   try {
-    await pool.query(
+    await knex.raw(
       'UPDATE events SET title = ?, date = ?, time = ?, description = ? WHERE id = ?',
       [title, date, time || null, description || '', req.params.id],
     )
-    const [[event]] = await pool.query(
+    const [[event]] = await knex.raw(
       'SELECT id, title, date, time, description, creator_id as creatorId, created_at as createdAt FROM events WHERE id = ?',
       [req.params.id],
     )
@@ -71,7 +71,7 @@ router.put('/:id', requireRole('admin', 'senior_agent'), updateCalendarValidatio
 
 router.delete('/:id', requireRole('admin', 'senior_agent'), deleteEventValidation, async (req, res) => {
   try {
-    await pool.query('DELETE FROM events WHERE id = ?', [req.params.id])
+    await knex.raw('DELETE FROM events WHERE id = ?', [req.params.id])
     res.json({ ok: true })
   } catch (err) {
     res.status(500).json({ message: 'Failed to delete event' })

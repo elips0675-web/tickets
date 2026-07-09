@@ -27,8 +27,6 @@ import { JWT_SECRET, authenticateToken } from './middleware.js'
 import { cacheMiddleware } from './cache.js'
 import { auditLogMiddleware } from './audit.js'
 import multer from 'multer'
-import knex from 'knex'
-import knexConfig from '../knexfile.js'
 
 const app = express()
 const server = createServer(app)

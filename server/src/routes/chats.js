@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import pool from '../db.js'
+import knex from '../db.js'
 import { authenticateToken } from '../middleware.js'
 
 const router = Router()
@@ -7,7 +7,7 @@ router.use(authenticateToken)
 
 router.get('/', async (req, res) => {
   try {
-    const [rows] = await pool.query(`
+    const [rows] = await knex.raw(`
       SELECT c.*,
         (SELECT m.text FROM chat_messages m WHERE m.chat_id = c.id ORDER BY m.created_at DESC LIMIT 1) as last_message,
         (SELECT m.created_at FROM chat_messages m WHERE m.chat_id = c.id ORDER BY m.created_at DESC LIMIT 1) as last_time
@@ -22,9 +22,9 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const [[chat]] = await pool.query('SELECT * FROM chat_rooms WHERE id = ?', [req.params.id])
+    const [[chat]] = await knex.raw('SELECT * FROM chat_rooms WHERE id = ?', [req.params.id])
     if (!chat) return res.status(404).json({ message: 'Chat not found' })
-    const [messages] = await pool.query(
+    const [messages] = await knex.raw(
       'SELECT * FROM chat_messages WHERE chat_id = ? ORDER BY created_at ASC',
       [req.params.id],
     )
@@ -40,13 +40,13 @@ router.post('/:id/messages', async (req, res) => {
   const { text } = req.body
   if (!text?.trim()) return res.status(400).json({ message: 'Text required' })
   try {
-    const [result] = await pool.query(
+    const [result] = await knex.raw(
       'INSERT INTO chat_messages (chat_id, sender_id, sender_name, text) VALUES (?, ?, ?, ?)',
       [req.params.id, req.user.userId, req.user.name || 'User', text],
     )
-    const [[msg]] = await pool.query('SELECT * FROM chat_messages WHERE id = ?', [result.insertId])
+    const [[msg]] = await knex.raw('SELECT * FROM chat_messages WHERE id = ?', [result.insertId])
     // Уведомление участникам чата кроме отправителя
-    const [participants] = await pool.query(
+    const [participants] = await knex.raw(
       'SELECT DISTINCT sender_id FROM chat_messages WHERE chat_id = ? AND sender_id != ?',
       [req.params.id, req.user.userId],
     )
@@ -69,7 +69,7 @@ router.post('/:id/messages', async (req, res) => {
 
 router.put('/:id/read', async (req, res) => {
   try {
-    await pool.query('UPDATE chat_rooms SET unread = 0 WHERE id = ?', [req.params.id])
+    await knex.raw('UPDATE chat_rooms SET unread = 0 WHERE id = ?', [req.params.id])
     res.json({ ok: true })
   } catch (err) {
     res.status(500).json({ message: 'Failed to mark read' })
@@ -81,19 +81,19 @@ router.post('/personal/:userId', async (req, res) => {
   const myId = req.user.userId
   if (Number(userId) === myId) return res.status(400).json({ message: 'Cannot chat with yourself' })
   try {
-    const [[existing]] = await pool.query(
+    const [[existing]] = await knex.raw(
       'SELECT * FROM chat_rooms WHERE type = ? AND name = (SELECT name FROM employees WHERE id = ?)',
       ['personal', userId],
     )
     if (existing) return res.json(existing)
 
-    const [[userRow]] = await pool.query('SELECT name FROM employees WHERE id = ?', [userId])
+    const [[userRow]] = await knex.raw('SELECT name FROM employees WHERE id = ?', [userId])
     if (!userRow) return res.status(404).json({ message: 'User not found' })
-    const [result] = await pool.query(
+    const [result] = await knex.raw(
       'INSERT INTO chat_rooms (name, type) VALUES (?, ?)',
       [userRow.name, 'personal'],
     )
-    const [[chat]] = await pool.query('SELECT * FROM chat_rooms WHERE id = ?', [result.insertId])
+    const [[chat]] = await knex.raw('SELECT * FROM chat_rooms WHERE id = ?', [result.insertId])
     res.status(201).json(chat)
   } catch (err) {
     console.error('Create personal chat error:', err)

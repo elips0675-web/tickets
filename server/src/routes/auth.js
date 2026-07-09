@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
 import { body } from 'express-validator'
-import pool from '../db.js'
+import knex from '../db.js'
 import { JWT_SECRET, authenticateToken, requireRole } from '../middleware.js'
 import { sendTicketNotification } from '../email.js'
 import { loginValidation, registerValidation, handleErrors } from '../validate.js'
@@ -13,7 +13,7 @@ const router = Router()
 router.post('/login', loginValidation, async (req, res) => {
   const { email, password } = req.body
   try {
-    const [rows] = await pool.query(
+    const [rows] = await knex.raw(
       'SELECT id, email, name, role, password_hash FROM employees WHERE email = ? AND is_active = 1',
       [email],
     )
@@ -44,12 +44,12 @@ router.post('/login', loginValidation, async (req, res) => {
 router.post('/register', authenticateToken, requireRole('admin'), registerValidation, async (req, res) => {
   const { name, email, password, department, title } = req.body
   try {
-    const [existing] = await pool.query('SELECT id FROM employees WHERE email = ?', [email])
+    const [existing] = await knex.raw('SELECT id FROM employees WHERE email = ?', [email])
     if (existing.length > 0) {
       return res.status(409).json({ message: 'Пользователь с таким email уже существует' })
     }
     const hash = await bcrypt.hash(password, 10)
-    const [result] = await pool.query(
+    const [result] = await knex.raw(
       'INSERT INTO employees (name, email, password_hash, role, department, title, is_active) VALUES (?, ?, ?, ?, ?, ?, 1)',
       [name, email, hash, 'agent', department || '', title || 'Сотрудник'],
     )
@@ -76,12 +76,12 @@ router.post('/dev-login', (req, res) => {
 router.post('/forgot-password', body('email').isEmail(), handleErrors, async (req, res) => {
   const { email } = req.body
   try {
-    const [rows] = await pool.query('SELECT id, name FROM employees WHERE email = ?', [email])
+    const [rows] = await knex.raw('SELECT id, name FROM employees WHERE email = ?', [email])
     if (rows.length === 0) return res.json({ message: 'If the email exists, a reset link has been sent' })
 
     const token = crypto.randomBytes(32).toString('hex')
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000) // 1 hour
-    await pool.query(
+    await knex.raw(
       'INSERT INTO password_resets (email, token, expires_at) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE token = VALUES(token), expires_at = VALUES(expires_at)',
       [email, token, expiresAt],
     )
@@ -102,15 +102,15 @@ router.post('/forgot-password', body('email').isEmail(), handleErrors, async (re
 router.post('/reset-password', body('token').isLength({ min: 1 }), body('password').isLength({ min: 6 }), handleErrors, async (req, res) => {
   const { token, password } = req.body
   try {
-    const [rows] = await pool.query(
+    const [rows] = await knex.raw(
       'SELECT email FROM password_resets WHERE token = ? AND expires_at > NOW()',
       [token],
     )
     if (rows.length === 0) return res.status(400).json({ message: 'Invalid or expired token' })
 
     const hash = await bcrypt.hash(password, 10)
-    await pool.query('UPDATE employees SET password_hash = ? WHERE email = ?', [hash, rows[0].email])
-    await pool.query('DELETE FROM password_resets WHERE token = ?', [token])
+    await knex.raw('UPDATE employees SET password_hash = ? WHERE email = ?', [hash, rows[0].email])
+    await knex.raw('DELETE FROM password_resets WHERE token = ?', [token])
     res.json({ message: 'Password reset successfully' })
   } catch (err) {
     console.error('Reset password error:', err)
